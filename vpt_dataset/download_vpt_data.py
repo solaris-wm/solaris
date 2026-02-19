@@ -140,10 +140,12 @@ if __name__ == "__main__":
             print(f"  - {idx_file.name} -> (no version)")
     
     # Process index files in parallel
+    # append "vpt/" to the save dir path
+    save_dir = os.path.join(args.save_dir, "vpt")
     worker_args = [
         (
             str(index_file),
-            args.save_dir,
+            save_dir,
             args.num_workers,
             args.max_samples,
         )

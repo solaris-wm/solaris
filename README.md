@@ -6,9 +6,7 @@ This repository contains the JAX implementation of the **Solaris** multiplayer w
 
 ## Inference
 
-### Set up environment (GPU)
-
-#### 1. Python Env
+### Set up python env (GPU)
 
 ```bash
 conda env create -f environment.yml
@@ -18,7 +16,7 @@ pip install -r requirements_gpu.txt
 pip install -e .
 ```
 
-#### 2. Download datasets and pretrained model weights
+### Download eval datasets and pretrained model weights
 
 All example scripts assume a directory layout like:
 
@@ -75,9 +73,7 @@ Inference scripts output FID numbers in their log messages by default.
 
 Note that, only TPU training is supported due to large memory requirements on GPU.
 
-### Set up environment
-
-#### 1. Python Env
+### Set up Python env
 
 ```bash
 conda env create -f environment.yml
@@ -87,13 +83,17 @@ pip install -r requirements_tpu.txt
 pip install -e .
 ```
 
-#### 2. Download datasets and pretrained model weights
+### Download all datasets and pretrained model weights
 
 There are many ways to store data on GCP TPUs, the easiest being Persistent Disks. Assuming you have your storage setup, download the hugging face folders there:
 
 - `.../datasets/` – training and eval datasets.
 - `.../pretrained/` – pretrained CLIP, VAE, and world-model weights.
 - `.../output/` – generated videos.
+
+#### VPT dataset
+
+The full training pipeline requires training on the single-player [VPT](https://github.com/openai/Video-Pre-Training) dataset. Refer to [vpt_datasets/README.md](vpt_dataset/README.md) for instructions on how to set it up.
 
 ### Training stages
 

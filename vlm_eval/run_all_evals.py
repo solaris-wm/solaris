@@ -14,8 +14,8 @@ import time
 from pathlib import Path
 
 # Base directories
-GENERATIONS_DIR = Path("./output")
-DATASET_BASE = Path("./datasets/eval/")
+GENERATIONS_DIR = Path("./../output")
+DATASET_BASE = Path("./../datasets/eval/")
 
 EVAL_TYPE_MAPPING = {
     "translation": "translationEval",

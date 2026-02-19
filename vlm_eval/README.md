@@ -82,18 +82,6 @@ python run_eval.py DATASET_DIR --generated MODEL_OUTPUT_DIR [OPTIONS]
 | `--summary-json`   | `Path`, default auto-detected for structure evals | Path to `structure_building_summary.json` (only used for `structureEval` / `structureNoPlaceEval`). If omitted, a default path under `assets/hard_coded_gt/` is used.                                                               |
 | `--generated PATH` | `Path`, default `None` (ground-truth only)        | Path to a generated-videos directory (e.g. `./../output/solaris/`). Enables evaluation of generated videos; also controls the model name used in output paths and frame extraction directories.                                     |
 
-#### Available Datasets
-
-| Dataset                  | Description                             | Queries/Episode               | Expected Answer                     |
-| ------------------------ | --------------------------------------- | ----------------------------- | ----------------------------------- |
-| `turnToLookEval`         | Both players turn to look at each other | 1                             | yes                                 |
-| `turnToLookOppositeEval` | Players do NOT look at each other       | 1                             | no                                  |
-| `translationEval`        | Detects player movement direction       | 2 (both perspectives)         | closer/farther/left/right/no motion |
-| `rotationEval`           | Detects camera rotation direction       | 1                             | left/right/ no player               |
-| `oneLooksAwayEval`       | One player looks away and back          | 2 (presence queries)          | yes/no                              |
-| `bothLookAwayEval`       | Both players look away and back         | 4 (2 bots × presence queries) | yes/no                              |
-| `structureEval`          | Structure is built and visible          | 1                             | yes                                 |
-
 ### Output Location
 
 By default `run_eval.py` auto-organizes outputs under `results_json/`:
@@ -117,7 +105,7 @@ You can override the root with `--results-dir` and the leaf directory name with 
   "breakdown_by_query_type": {...},
   "episode_level_accuracy": {...},
   "results": [...],
-  "vlm_errors": [...]  // only present if some queries failed due to API errors
+  "vlm_errors": [...]
 }
 ```
 
@@ -167,6 +155,20 @@ The `episode_level_accuracy` field measures whether ALL queries for each episode
 | `per_player_episode_accuracy` | (Both-players only) % of episodes where all queries for that player are correct |
 
 ## Implementation
+
+### Available Datasets
+
+The codebase supports the following eval datasets with every datasets having a dedicated [handler](#handler-architecture).
+
+| Dataset                  | Description                             | Queries/Episode               | Expected Answer                     |
+| ------------------------ | --------------------------------------- | ----------------------------- | ----------------------------------- |
+| `turnToLookEval`         | Both players turn to look at each other | 1                             | yes                                 |
+| `turnToLookOppositeEval` | Players do NOT look at each other       | 1                             | no                                  |
+| `translationEval`        | Detects player movement direction       | 2 (both perspectives)         | closer/farther/left/right/no motion |
+| `rotationEval`           | Detects camera rotation direction       | 1                             | left/right/ no player               |
+| `oneLooksAwayEval`       | One player looks away and back          | 2 (presence queries)          | yes/no                              |
+| `bothLookAwayEval`       | Both players look away and back         | 4 (2 bots × presence queries) | yes/no                              |
+| `structureEval`          | Structure is built and visible          | 1                             | yes                                 |
 
 ### Code Flow Overview
 

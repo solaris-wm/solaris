@@ -131,7 +131,7 @@ It will train for 120K steps. The final model weights are the initialization for
 
 ### Stage 2 – Multiplayer bidirectional
 
-This stage trains the multiplayer bidirectional model on the `Duet` datasets obtained from [SolarisEngine](https://github.com/georgysavva/mc-multiplayer-data/tree/release) starting from the pretrained single player model.
+This stage trains the multiplayer bidirectional model on the `Duet` datasets obtained from [SolarisEngine](https://github.com/solaris-wm/solaris-engine) starting from the pretrained single player model.
 
 ```bash
 python src/train.py \

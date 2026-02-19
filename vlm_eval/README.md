@@ -30,7 +30,7 @@ export GEMINI_API_KEY="your-api-key"
 python run_all_evals.py
 ```
 
-This scans `./../output` for model output folders (the output folder of the [inference script](../README.md#quick-gpu-inference)) and dataset in `./../datasets`, and calls the underlying [run_eval.py](#run_evalspy) for every model output-dataset pair. Refer to the [run_all_evals.py](#run_all_evalspy) CLI section below for the list of CLI args.
+This scans `./../output` for model output folders (the output folder of the [inference script](../README.md#quick-gpu-inference)) and dataset in `./../datasets`, and calls the underlying [run_eval.py](#run_evalpy) for every model output-dataset pair. Refer to the [run_all_evals.py](#run_all_evalspy) CLI section below for the list of CLI args.
 
 ### Extract frames (for debugging)
 

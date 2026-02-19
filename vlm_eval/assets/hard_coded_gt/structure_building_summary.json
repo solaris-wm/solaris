@@ -1,0 +1,518 @@
+{
+  "instance_0": {
+    "episode_0": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    },
+    "episode_1": {
+      "builder": "bravo",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": false,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": true
+    },
+    "episode_2": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_3": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_4": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_5": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_6": {
+      "builder": "alpha",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": true,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": false
+    },
+    "episode_7": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_8": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    },
+    "episode_9": {
+      "builder": "bravo",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": false,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": true
+    },
+    "episode_10": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    },
+    "episode_11": {
+      "builder": "bravo",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": false,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": true
+    },
+    "episode_12": {
+      "builder": "alpha",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": true,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": false
+    },
+    "episode_13": {
+      "builder": "bravo",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": false,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": true
+    },
+    "episode_14": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_15": {
+      "builder": "bravo",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": false,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": true
+    },
+    "episode_16": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    },
+    "episode_17": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_18": {
+      "builder": "alpha",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": true,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": false
+    },
+    "episode_19": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_20": {
+      "builder": "bravo",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": false,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": true
+    },
+    "episode_21": {
+      "builder": "bravo",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": false,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": true
+    },
+    "episode_22": {
+      "builder": "bravo",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": false,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": true
+    },
+    "episode_23": {
+      "builder": "alpha",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": true,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": false
+    },
+    "episode_24": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    },
+    "episode_25": {
+      "builder": "bravo",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": false,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": true
+    },
+    "episode_26": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    },
+    "episode_27": {
+      "builder": "alpha",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": true,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": false
+    },
+    "episode_28": {
+      "builder": "alpha",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": true,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": false
+    },
+    "episode_29": {
+      "builder": "bravo",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": false,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": true
+    },
+    "episode_30": {
+      "builder": "bravo",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": false,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": true
+    },
+    "episode_31": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    }
+  },
+  "instance_1": {
+    "episode_0": {
+      "builder": "alpha",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": true,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": false
+    },
+    "episode_1": {
+      "builder": "bravo",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": false,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": true
+    },
+    "episode_2": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_3": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_4": {
+      "builder": "alpha",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": true,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": false
+    },
+    "episode_5": {
+      "builder": "bravo",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": false,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": true
+    },
+    "episode_6": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    },
+    "episode_7": {
+      "builder": "alpha",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": true,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": false
+    },
+    "episode_8": {
+      "builder": "bravo",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": false,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": true
+    },
+    "episode_9": {
+      "builder": "alpha",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": true,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": false
+    },
+    "episode_10": {
+      "builder": "alpha",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": true,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": false
+    },
+    "episode_11": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    },
+    "episode_12": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_13": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    },
+    "episode_14": {
+      "builder": "alpha",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": true,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": false
+    },
+    "episode_15": {
+      "builder": "alpha",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": true,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": false
+    },
+    "episode_16": {
+      "builder": "bravo",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": false,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": true
+    },
+    "episode_17": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_18": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_19": {
+      "builder": "alpha",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": true,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": false
+    },
+    "episode_20": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    },
+    "episode_21": {
+      "builder": "bravo",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": false,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": true
+    },
+    "episode_22": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_23": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_24": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_25": {
+      "builder": "alpha",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": true,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": false
+    },
+    "episode_26": {
+      "builder": "bravo",
+      "structure": "wall_4x1",
+      "alpha_structure": "wall_4x1",
+      "alpha_builds": false,
+      "bravo_structure": "wall_4x1",
+      "bravo_builds": true
+    },
+    "episode_27": {
+      "builder": "bravo",
+      "structure": "wall_2x2",
+      "alpha_structure": "wall_2x2",
+      "alpha_builds": false,
+      "bravo_structure": "wall_2x2",
+      "bravo_builds": true
+    },
+    "episode_28": {
+      "builder": "alpha",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": true,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": false
+    },
+    "episode_29": {
+      "builder": "alpha",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": true,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": false
+    },
+    "episode_30": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    },
+    "episode_31": {
+      "builder": "bravo",
+      "structure": "tower_2x1",
+      "alpha_structure": "tower_2x1",
+      "alpha_builds": false,
+      "bravo_structure": "tower_2x1",
+      "bravo_builds": true
+    }
+  }
+}

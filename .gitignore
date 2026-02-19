@@ -1,0 +1,21 @@
+# Custom
+wandb
+.vscode/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+penv/
+outputs/
+.ipynb_checkpoints
+*.egg-info
+.local/
+
+logs/
+.cursorrules
+datasets/
+pretrained/
+output/
+checkpoint/
+jax_cache/

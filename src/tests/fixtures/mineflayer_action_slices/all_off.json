@@ -1,0 +1,43 @@
+[
+  {
+    "x": -4119.5,
+    "y": 64,
+    "z": -1427.5,
+    "yaw": -2.553,
+    "pitch": 0.0,
+    "action": {
+      "forward": false,
+      "back": false,
+      "left": false,
+      "right": false,
+      "jump": false,
+      "sprint": false,
+      "sneak": false,
+      "camera": [0.0, 0.0],
+      "attack": false,
+      "use": false,
+      "mount": false,
+      "dismount": false,
+      "place_block": false,
+      "place_entity": false,
+      "mine": false,
+      "hotbar.1": false,
+      "hotbar.2": false,
+      "hotbar.3": false,
+      "hotbar.4": false,
+      "hotbar.5": false,
+      "hotbar.6": false,
+      "hotbar.7": false,
+      "hotbar.8": false,
+      "hotbar.9": false
+    },
+    "renderTime": 1765663442591,
+    "physicsTime": 134777.155221,
+    "frame_count": 0,
+    "episode_id": 0,
+    "relativeTimeMs": 0.0,
+    "epochTime": 1765663442.591,
+    "extra_info": { "seed": 42 }
+  }
+]
+

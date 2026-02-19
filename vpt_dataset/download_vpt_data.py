@@ -111,18 +111,6 @@ def process_index_file(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--index_file",
-        type=str,
-        default=None,
-        help="Single index file to process (if not provided, processes all files in vpt_indices)",
-    )
-    parser.add_argument(
-        "--vpt_indices_dir",
-        type=str,
-        default="vpt_dataset/vpt_indices",
-        help="Directory containing index files",
-    )
     parser.add_argument("--save_dir", type=str, required=True)
     parser.add_argument("--max_samples", type=int)
     parser.add_argument("--num_workers", type=int, default=32)
@@ -134,46 +122,31 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     
-    if args.index_file:
-        # Process single index file
-        version = extract_version_from_filename(os.path.basename(args.index_file))
+    
+    # Process all index files in vpt_indices directory
+    indices_dir = Path(__file__).parent / args.vpt_indices_dir
+    
+    index_files = list(indices_dir.glob("*.json"))
+    if not index_files:
+        print(f"No JSON files found in {indices_dir}")
+        exit(1)
+    
+    print(f"Found {len(index_files)} index files to process")
+    for idx_file in index_files:
+        version = extract_version_from_filename(idx_file.name)
         if version:
-            versioned_save_dir = os.path.join(args.save_dir, f"v{version}")
+            print(f"  - {idx_file.name} -> v{version}")
         else:
-            versioned_save_dir = args.save_dir
-        download_data(
-            args.index_file,
-            versioned_save_dir,
+            print(f"  - {idx_file.name} -> (no version)")
+    
+    # Process index files in parallel
+    worker_args = [
+        (
+            str(index_file),
+            args.save_dir,
             args.num_workers,
             args.max_samples,
         )
-    else:
-        # Process all index files in vpt_indices directory
-        indices_dir = Path(args.vpt_indices_dir)
-        if not indices_dir.exists():
-            indices_dir = Path(__file__).parent / args.vpt_indices_dir
-        
-        index_files = list(indices_dir.glob("*.json"))
-        if not index_files:
-            print(f"No JSON files found in {indices_dir}")
-            exit(1)
-        
-        print(f"Found {len(index_files)} index files to process")
-        for idx_file in index_files:
-            version = extract_version_from_filename(idx_file.name)
-            if version:
-                print(f"  - {idx_file.name} -> v{version}")
-            else:
-                print(f"  - {idx_file.name} -> (no version)")
-        
-        # Process index files in parallel
-        worker_args = [
-            (
-                str(index_file),
-                args.save_dir,
-                args.num_workers,
-                args.max_samples,
-            )
-            for index_file in index_files
-        ]
-        launch_jobs(worker_args, args.num_index_workers, process_index_file)
+        for index_file in index_files
+    ]
+    launch_jobs(worker_args, args.num_index_workers, process_index_file)

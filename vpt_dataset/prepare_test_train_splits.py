@@ -95,6 +95,64 @@ def process_split(episodes_info_path, dataset_path, target_dir, split_name):
     print(f"Copied episode info file to {dst_info_path}")
 
 
+def move_remaining_to_excluded(dataset_path):
+    """
+    Move all files/dirs left in the dataset (outside test/ and train/) into excluded/,
+    preserving the relative subfolder structure.
+    """
+    dataset_path = Path(dataset_path)
+    excluded_path = dataset_path / "excluded"
+    skip_dirs = {"test", "train", "excluded"}
+
+    moved_count = 0
+    for root, dirs, files in os.walk(dataset_path, topdown=True):
+        root = Path(root)
+        # Skip anything already under test, train, or excluded
+        try:
+            rel = root.relative_to(dataset_path)
+        except ValueError:
+            continue
+        parts = rel.parts
+        if not parts:
+            # root is dataset_path itself
+            dirs[:] = [d for d in dirs if d not in skip_dirs]
+            continue
+        if parts[0] in skip_dirs:
+            dirs.clear()
+            continue
+
+        for name in files:
+            src = root / name
+            rel_path = src.relative_to(dataset_path)
+            dst = excluded_path / rel_path
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                shutil.move(str(src), str(dst))
+                moved_count += 1
+            except Exception as e:
+                print(f"Warning: could not move {src} to excluded: {e}")
+
+    # Remove empty dirs that are left (only under dataset_path, not test/train/excluded)
+    for root, dirs, files in os.walk(dataset_path, topdown=False):
+        root = Path(root)
+        if root == dataset_path:
+            continue
+        try:
+            rel = root.relative_to(dataset_path)
+        except ValueError:
+            continue
+        if rel.parts[0] in skip_dirs:
+            continue
+        if not any(root.iterdir()):
+            try:
+                root.rmdir()
+            except OSError:
+                pass
+
+    print(f"Moved {moved_count} remaining items to excluded/")
+    return moved_count
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Prepare test/train splits by moving episodes to respective subdirectories"
@@ -147,6 +205,10 @@ def main():
         "train",
         "train"
     )
+    
+    # Move everything left in the source dir to excluded/
+    print("\nMoving remaining files to excluded/...")
+    move_remaining_to_excluded(dataset_path)
     
     print("\nDone!")
     return 0

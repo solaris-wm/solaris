@@ -4,9 +4,9 @@ This repository contains the JAX implementation of the **Solaris** multiplayer w
 
 ---
 
-## Inference
+## Inference (GPU)
 
-### Set up python env (GPU)
+### Set up Python env
 
 ```bash
 conda env create -f environment.yml
@@ -16,21 +16,23 @@ pip install -r requirements_gpu.txt
 pip install -e .
 ```
 
-### Download eval datasets and pretrained model weights
+### Download pretrained model weights
 
-All example scripts assume a directory layout like:
+```bash
+hf download nyu-visionx/solaris --local-dir ./pretrained
+```
 
-- `.../datasets/` – training and eval datasets.
-- `.../pretrained/` – pretrained CLIP, VAE, and world-model weights.
-- `.../output/` – generated videos.
+See the [nyu-visionx/solaris](https://huggingface.co/nyu-visionx/solaris) HF model repo for all available model weights.
 
-You will need to **download this folder once** from Hugging Face (link placeholder for now):
+### Download eval datasets
 
-- **Hugging Face release (datasets + model states)**: `[TBD Hugging Face link](https://huggingface.co/REPLACE_ME)`
+```bash
+hf download nyu-visionx/solaris-eval-datasets --local-dir ./datasets
+```
 
-After download, point the `device.*` paths in your commands (see examples below) to the location where you unpacked this folder.
+See the [nyu-visionx/solaris-eval-datasets](https://huggingface.co/nyu-visionx/solaris-eval-datasets) for all available evaluation datasets.
 
-### Quick GPU inference
+### Simple inference
 
 For the simplest scenario, run this:
 
@@ -39,25 +41,6 @@ python src/inference.py experiment_name=solaris
 ```
 
 It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will use batch size of `1` and write generated videos to `./output/`.
-
-### Quick TPU inference
-
-Refer to [TPU Set up environment](#set-up-environment) section to set up a TPU environment for inference
-
-For the simplest scenario, edit the folder paths from you've set them up and run this:
-
-```bash
-python src/inference.py \
-        device=tpu \
-        experiment_name=solaris \
-        device.data_dir="YOUR_DATA_DIR" \
-        device.pretrained_model_dir="YOUR_PRETRAINED_MODEL_DIR" \
-        device.output_dir="YOUR_OUTPUT_DIR" \
-        device.checkpoint_dir="YOUR_CHECKPOINT_DIR" \
-        device.jax_cache_dir="YOUR_JAX_CACHE_DIR"
-```
-
-Note that in a multi-host TPU setting, you will run it with `gcloud alpha compute tpus tpu-vm ssh --command {COMMAND}` instead of directly so that it gets launched on all hosts in the TPU pod.
 
 ## Evaluation
 
@@ -83,15 +66,35 @@ pip install -r requirements_tpu.txt
 pip install -e .
 ```
 
-### Download all datasets and pretrained model weights
+In a multi-host TPU setting you will need your conda environment on all host, which can be achieved by wrapping your installation instruction with `gcloud alpha compute tpus tpu-vm ssh --command {COMMAND}`.
 
-There are many ways to store data on GCP TPUs, the easiest being Persistent Disks. Assuming you have your storage setup, download the hugging face folders there:
+### TPU Storage Setup
 
-- `.../datasets/` – training and eval datasets.
-- `.../pretrained/` – pretrained CLIP, VAE, and world-model weights.
-- `.../output/` – generated videos.
+There are many ways to store data on GCP TPUs, such as Persistent Disks or GCS buckets. Refer to the [official guide](https://docs.cloud.google.com/tpu/docs/storage-options) for how to set it up. Note that your storage option will need to support writing as well to save training checkpoints and generated outputs.
 
-#### VPT dataset
+### Download pretrained model weights
+
+```bash
+hf download nyu-visionx/solaris --local-dir YOUR_STORAGE_PATH/pretrained
+```
+
+See the [nyu-visionx/solaris](https://huggingface.co/nyu-visionx/solaris) HF model repo for all available model weights.
+
+### Download eval datasets
+
+```bash
+hf download nyu-visionx/solaris-eval-datasets --local-dir YOUR_STORAGE_PATH/datasets
+```
+
+#### Download training datasets
+
+##### Multiplayer Duet dataset
+
+```bash
+hf download nyu-visionx/solaris-duet --local-dir YOUR_STORAGE_PATH/datasets
+```
+
+##### Single player VPT dataset
 
 The full training pipeline requires training on the single-player [VPT](https://github.com/openai/Video-Pre-Training) dataset. Refer to [vpt_datasets/README.md](vpt_dataset/README.md) for instructions on how to set it up.
 
@@ -104,7 +107,7 @@ The training pipeline consists of four stages, each backed by a dedicated [runne
 3. Stage 3 — Multiplayer causal training
 4. Stage 4 — Multiplayer self-forcing training
 
-Below are the four example commands to run each training stage. As with TPU inference, edit the folder paths to where you set them up and run the command as part of `gcloud alpha compute tpus tpu-vm ssh --command {COMMAND}` in a multi-host setting.
+Below are the four example commands to run each training stage. Edit the folder paths to where you set them up and run the command as part of `gcloud alpha compute tpus tpu-vm ssh --command {COMMAND}` in a multi-host setting.
 
 ### Stage 1 – Single-player bidirectional pretraining
 
@@ -120,7 +123,7 @@ python src/train.py \
         wandb_entity="YOUR_WANDB_ENTITY" \
         device.batch_size=64 \
         device.eval_batch_size=64 \
-        device.data_dir="YOUR_DATA_DIR" \
+        device.data_dir="YOUR_DATASETS_DIR" \
         device.pretrained_model_dir="YOUR_PRETRAINED_MODEL_DIR" \
         device.output_dir="YOUR_OUTPUT_DIR" \
         device.checkpoint_dir="YOUR_CHECKPOINT_DIR" \
@@ -138,7 +141,7 @@ python src/train.py \
         runner=trainer_mp_bidirectional \
         experiment_name=mp_bidirectional \
         wandb_entity="YOUR_WANDB_ENTITY" \
-        device.data_dir="YOUR_DATA_DIR" \
+        device.data_dir="YOUR_DATASETS_DIR" \
         device.pretrained_model_dir="YOUR_PRETRAINED_MODEL_DIR" \
         device.output_dir="YOUR_OUTPUT_DIR" \
         device.checkpoint_dir="YOUR_CHECKPOINT_DIR" \
@@ -157,7 +160,7 @@ python src/train.py \
         runner=trainer_mp_causal \
         experiment_name=mp_causal \
         wandb_entity="YOUR_WANDB_ENTITY" \
-        device.data_dir="YOUR_DATA_DIR" \
+        device.data_dir="YOUR_DATASETS_DIR" \
         device.pretrained_model_dir="YOUR_PRETRAINED_MODEL_DIR" \
         device.output_dir="YOUR_OUTPUT_DIR" \
         device.checkpoint_dir="YOUR_CHECKPOINT_DIR" \
@@ -176,7 +179,7 @@ python src/train.py \
         runner=trainer_mp_sf \
         experiment_name=mp_sf \
         wandb_entity="YOUR_WANDB_ENTITY" \
-        device.data_dir="YOUR_DATA_DIR" \
+        device.data_dir="YOUR_DATASETS_DIR" \
         device.pretrained_model_dir="YOUR_PRETRAINED_MODEL_DIR" \
         device.output_dir="YOUR_OUTPUT_DIR" \
         device.checkpoint_dir="YOUR_CHECKPOINT_DIR" \
@@ -185,6 +188,25 @@ python src/train.py \
 ```
 
 It initializes the student from `YOUR_PRETRAINED_MODEL_DIR/mp_causal_120000.pt`, and the teacher and critic from `YOUR_PRETRAINED_MODEL_DIR/mp_bidirectional_120000.pt`, and trains for 1.2K steps. It will save the final model weights to `YOUR_PRETRAINED_MODEL_DIR/solaris.pt` which can be used for inference and evaluation.
+
+### TPU inference
+
+TPU Inference requires the same setup as TPU training except that it doesn't need the [training datasets](#download-training-datasets) part.
+
+For the simplest scenario, edit the folder paths from you've set them up and run this:
+
+```bash
+python src/inference.py \
+        device=tpu \
+        experiment_name=solaris \
+        device.data_dir="YOUR_DATASETS_DIR" \
+        device.pretrained_model_dir="YOUR_PRETRAINED_MODEL_DIR" \
+        device.output_dir="YOUR_OUTPUT_DIR" \
+        device.checkpoint_dir="YOUR_CHECKPOINT_DIR" \
+        device.jax_cache_dir="YOUR_JAX_CACHE_DIR"
+```
+
+Note that in a multi-host TPU setting, you will run it with `gcloud alpha compute tpus tpu-vm ssh --command {COMMAND}` instead of directly so that it gets launched on all hosts in the TPU pod.
 
 ## Code dive-in
 

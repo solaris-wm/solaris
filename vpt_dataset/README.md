@@ -11,7 +11,7 @@ Use `download_vpt_data.py` to download episodes from OpenAI's blob storage.
 ```bash
 conda activate solaris
 
-python download_vpt_data.py --save_dir YOUR_DATA_DIR
+python download_vpt_data.py --save_dir YOUR_DATASETS_DIR
 ```
 
 ### Arguments
@@ -38,7 +38,7 @@ After downloading the dataset, use `prepare_test_train_splits.py` to organize ep
 ### Usage
 
 ```bash
-python prepare_test_train_splits.py YOUR_DATA_DIR/vpt/
+python prepare_test_train_splits.py YOUR_DATASETS_DIR/vpt/
 ```
 
 ### Arguments

@@ -13,14 +13,8 @@ cd vlm_eval/
 conda env create -f environment.yml
 conda activate solaris-eval
 
-# Or, using venv
-# python -m venv .venv
-# source .venv/bin/activate
-
-# Install Python dependencies
 pip install -r requirements.txt
 
-# Set your Gemini API key (required for VLM evaluation, not needed for --dry-run / --extract-frames)
 export GEMINI_API_KEY="your-api-key"
 ```
 
@@ -30,7 +24,7 @@ export GEMINI_API_KEY="your-api-key"
 python run_all_evals.py
 ```
 
-This scans `./../output` for model output folders (the output folder of the [inference script](../README.md#quick-gpu-inference)) and dataset in `./../datasets/eval`, and calls the underlying [run_eval.py](#run_evalpy) for every model output-dataset pair. Refer to the [run_all_evals.py](#run_all_evalspy) CLI section below for the list of CLI args.
+This scans `./../output` for model output folders (the output folder of the [inference script](../README.md#simple-inference)) and dataset in `./../datasets/eval`, and calls the underlying [run_eval.py](#run_evalpy) for every model output-dataset pair. Refer to the [run_all_evals.py](#run_all_evalspy) CLI section below for the list of CLI args.
 
 ### Extract frames (for debugging)
 

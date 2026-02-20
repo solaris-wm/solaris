@@ -1,6 +1,6 @@
 # Solaris
 
-This repository contains the JAX implementation of the Solaris multiplayer world model for Minecraft. It support GCP TPU training and inference and GPU inference. It also contains the source code for the VLM-as-a-judge multiplayer self consistency metric.
+This repository contains the JAX implementation of the Solaris multiplayer world model for Minecraft. It supports GCP TPU training and inference and GPU inference. It also contains the source code for the VLM-as-a-judge multiplayer self-consistency metric.
 
 ---
 
@@ -40,21 +40,21 @@ For the simplest scenario, run this:
 python src/inference.py experiment_name=solaris
 ```
 
-It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will use batch size of `1` and write generated videos to `./output/`.
+It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will use a batch size of `1` and write generated videos to `./output/`.
 
 ## Evaluation
 
 ### VLM metric
 
-The code for VLM evaluation metric lives under [vlm_eval/](vlm_eval/). Refer to [vlm_eval/README.md](vlm_eval/README.md) for how to run it and the implementation details.
+The code for the VLM evaluation metric lives under [vlm_eval/](vlm_eval/). Refer to [vlm_eval/README.md](vlm_eval/README.md) for how to run it and the implementation details.
 
 ### FID
 
-To get the FID number check the inference script log file. It outputs FID numbers as log messages by default.
+To get the FID number, check the inference script log file. It outputs FID numbers as log messages by default.
 
 ## Training
 
-Note that, only TPU training is supported due to large memory requirements on GPU.
+Note that only TPU training is supported due to the large memory requirements on the GPU.
 
 ### Set up Python env
 
@@ -66,7 +66,7 @@ pip install -r requirements_tpu.txt
 pip install -e .
 ```
 
-In a multi-host TPU setting you will need your conda environment on all host, which can be achieved by wrapping your installation instruction with `gcloud alpha compute tpus tpu-vm ssh --command {COMMAND}`.
+In a multi-host TPU setting, you will need your conda environment on all hosts, which can be achieved by wrapping your installation instruction with `gcloud alpha compute tpus tpu-vm ssh --command {COMMAND}`.
 
 ### TPU Storage Setup
 
@@ -134,7 +134,7 @@ It will train for 120K steps. The final model weights are the initialization for
 
 ### Stage 2 – Multiplayer bidirectional
 
-This stage trains the multiplayer bidirectional model on the `Duet` datasets obtained from [SolarisEngine](https://github.com/solaris-wm/solaris-engine) starting from the pretrained single player model.
+This stage trains the multiplayer bidirectional model on the `Duet` datasets obtained from [SolarisEngine](https://github.com/solaris-wm/solaris-engine), starting from the pretrained single player model.
 
 ```bash
 python src/train.py \
@@ -172,7 +172,7 @@ It will save them to `YOUR_PRETRAINED_MODEL_DIR/mp_causal_60000.pt`.
 
 ### Stage 4 – Multiplayer self-forcing
 
-This stage finetunes the multiplayer causal model (student) on its own rollouts distilling from the multiplayer bidirectional model (teacher). This stage removes the test time distribution mismatch and makes the final multiplayer causal model a few-step diffusion model.
+This stage finetunes the multiplayer causal model (student) on its own rollouts, distilling from the multiplayer bidirectional model (teacher). This stage removes the test time distribution mismatch and makes the final multiplayer causal model a few-step diffusion model.
 
 ```bash
 python src/train.py \
@@ -191,7 +191,7 @@ It initializes the student from `YOUR_PRETRAINED_MODEL_DIR/mp_causal_60000.pt`, 
 
 ### TPU inference
 
-TPU Inference requires the same setup as TPU training except that it doesn't need the [training datasets](#download-training-datasets) part.
+TPU Inference requires the same setup as TPU training, except that it doesn't need the [training datasets](#download-training-datasets) part.
 
 Edit the folder paths to where you've set them up and run the below command as part of `gcloud alpha compute tpus tpu-vm ssh --command {COMMAND}` in a multi-host TPU setting:
 
@@ -216,7 +216,7 @@ This project uses Hydra for configuration. The configs live in [config/](config/
 
 ### Runners
 
-All training stages and inference code is built around runners. They use inheritance to ensure abstraction and code sharing.
+All training stages and inference code are built around runners. They use inheritance to ensure abstraction and code sharing.
 
 | Runner                                              | Description                                                                                                   |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -237,7 +237,7 @@ Below is the class inheritance diagram for all runners.
 
 #### Training stages and their runners
 
-Here is a summary what runner each training stage uses:
+Here is a summary of what runners each training stage uses:
 
 1. Stage 1 — Single-player bidirectional pretraining: `Trainer SP`
 2. Stage 2 — Multiplayer bidirectional training: `Trainer MP` with `bidirectional=True`
@@ -258,9 +258,9 @@ The codebase supports three model architectures:
 
 ### Datasets
 
-This repository supports two types of datasets: training and evaluation datasets. The former is used for training and test loss calculation and the later for inference and metrics calculation.
+This repository supports two types of datasets: training and evaluation datasets. The former is used for training and test loss calculation, and the latter for inference and metrics calculation.
 
-`vpt` and `duet` are two datasets that are both training and evaluation datasets, where inference for evaluation happens on their test splits. There are `7` evaluation-only datasets: `eval_building`, `eval_consistency_opposite`, `eval_consistency`, `eval_grounding`, `eval_memory`, `eval_movement_rotation`, and `eval_movement_translation`. Every dataset has a corresponding config file in [config/dataset/](config/dataset/) and every dataset that is used for evaluation has a dedicated `eval_ids` file in [src/data/eval_ids/](src/data/eval_ids/). The eval ids file together with `EvalBatchSampler()` defined in [src/data/batch_sampler.py](src/data/batch_sampler.py) ensure that evaluation always happens on the same episode segments regardless of the number of GPU/TPU devices used for inference.
+`vpt` and `duet` are two datasets that are both training and evaluation datasets, where inference for evaluation happens on their test splits. There are `7` evaluation-only datasets: `eval_building`, `eval_consistency_opposite`, `eval_consistency`, `eval_grounding`, `eval_memory`, `eval_movement_rotation`, and `eval_movement_translation`. Every dataset has a corresponding config file in [config/dataset/](config/dataset/), and every dataset that is used for evaluation has a dedicated `eval_ids` file in [src/data/eval_ids/](src/data/eval_ids/). The eval ids file together with `EvalBatchSampler()` defined in [src/data/batch_sampler.py](src/data/batch_sampler.py) ensure that evaluation always happens on the same episode segments regardless of the number of GPU/TPU devices used for inference.
 
 Below is a table summarizing all datasets in the codebase:
 

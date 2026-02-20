@@ -29,7 +29,7 @@ python download_vpt_data.py --save_dir YOUR_DATASETS_DIR
    - `relpaths`: List of relative paths to video files
 3. The script extracts version numbers from filenames (e.g., `all_7xx_Apr_6.json` → version `7`)
 4. Episodes are downloaded to versioned subdirectories (e.g., `v7/`, `v10/`)
-5. For each episode, both the video file (`.mp4`) and actions file (`.jsonl`) are downloaded
+5. For each episode, both the video file (`.mp4`) and the actions file (`.jsonl`) are downloaded
 
 ## Step 2: Prepare Test/Train Splits
 

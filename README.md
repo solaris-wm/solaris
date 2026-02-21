@@ -1,6 +1,6 @@
 # Solaris
 
-This repository contains the JAX implementation of the Solaris multiplayer world model for Minecraft. It supports GCP TPU training and inference and GPU inference. It also contains the source code for the VLM-as-a-judge multiplayer self-consistency metric.
+This repository contains the JAX implementation of the Solaris multiplayer world model for Minecraft. It supports GCP TPU training and inference, and GPU inference. It also contains the source code for the VLM-as-a-judge multiplayer self-consistency metric.
 
 ---
 
@@ -284,7 +284,7 @@ Below is a table summarizing all datasets in the codebase:
 
 ## Sharding
 
-This codebase doesn't implement FSDP and fully replicates the optimizer/models states across all devices. We found that this setup is sufficient for inference on a `48GB` GPU and for training on a `95GB` TPU (`v5p`) with a per-device batch of `1`. However, with this setup, training OOMs on a `80GB` GPU, thus GPU training is not supported.
+This codebase doesn't implement FSDP and fully replicates the optimizer/model states across all devices. We found that this setup is sufficient for inference on a `48GB` GPU and for training on a `95GB` TPU (`v5p`) with a per-device batch of `1`. However, with this setup, training OOMs on a`80GB` GPU, thus GPU training is not supported.
 
 ## Tests
 

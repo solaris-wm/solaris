@@ -27,10 +27,10 @@ See the [nyu-visionx/solaris](https://huggingface.co/nyu-visionx/solaris) HF mod
 ### Download eval datasets
 
 ```bash
-hf download nyu-visionx/solaris-eval-datasets --local-dir ./datasets
+hf download nyu-visionx/solaris-eval-datasets --local-dir ./datasets --repo-type dataset
 ```
 
-See the [nyu-visionx/solaris-eval-datasets](https://huggingface.co/nyu-visionx/datasets/solaris-eval-datasets) for all available evaluation datasets.
+See the [nyu-visionx/solaris-eval-datasets](https://huggingface.co/datasets/nyu-visionx/solaris-eval-datasets) for all available evaluation datasets.
 
 ### Simple inference
 
@@ -83,7 +83,7 @@ See the [nyu-visionx/solaris](https://huggingface.co/nyu-visionx/solaris) HF mod
 ### Download eval datasets
 
 ```bash
-hf download nyu-visionx/solaris-eval-datasets --local-dir YOUR_STORAGE_PATH/datasets
+hf download nyu-visionx/solaris-eval-datasets --local-dir YOUR_STORAGE_PATH/datasets --repo-type dataset
 ```
 
 #### Download training datasets

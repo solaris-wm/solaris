@@ -7,4 +7,4 @@ params:
   bidirectional: True
   noise_type: "standard"
   total_steps: 120000
-  pretrained_model_path: ${device.pretrained_model_dir}/matrix-game-init
+  pretrained_model_path: ${device.pretrained_model_dir}/matrix-game-init.pt

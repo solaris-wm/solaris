@@ -29,7 +29,7 @@ params:
   eval_data_dir: ${device.eval_data_dir}
   obs_resolution: ${obs_resolution}
   converters: ${model.dataset_converters}
-  clip_checkpoint_path: ${device.pretrained_model_dir}/clip
-  vae_checkpoint_path: ${device.pretrained_model_dir}/vae
+  clip_checkpoint_path: ${device.pretrained_model_dir}/clip.pt
+  vae_checkpoint_path: ${device.pretrained_model_dir}/vae.pt
   pretrained_model_dir: ${device.pretrained_model_dir}
   experiment_name: ${experiment_name}

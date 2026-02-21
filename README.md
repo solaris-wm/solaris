@@ -91,7 +91,13 @@ hf download nyu-visionx/solaris-eval-datasets --local-dir YOUR_STORAGE_PATH/data
 ##### Multiplayer Duet dataset
 
 ```bash
-hf download nyu-visionx/solaris-duet --local-dir YOUR_STORAGE_PATH/datasets
+hf download nyu-visionx/solaris-training-dataset --local-dir YOUR_STORAGE_PATH/datasets
+```
+
+The multiplayer `Duet` datasets is stored in a sharded form on HuggingFace. The above command will download it into `YOUR_STORAGE_PATH/datasets/duet_sharded`. Run the below command to unshard it to the original format that this codebase can work with:
+
+```bash
+python unshard_dataset.py --shards YOUR_STORAGE_PATH/datasets/duet_sharded --out YOUR_STORAGE_PATH/datasets/duet
 ```
 
 ##### Single player VPT dataset

@@ -1,6 +1,6 @@
 # Solaris
 
-This repository contains the JAX implementation of the Solaris multiplayer world model for Minecraft. It supports GCP TPU training and inference and GPU inference. It also contains the source code for the VLM-as-a-judge multiplayer self-consistency metric.
+This repository contains the JAX implementation of the Solaris multiplayer world model for Minecraft. It supports GCP TPU training and inference, and GPU inference. It also contains the source code for the VLM-as-a-judge multiplayer self-consistency metric.
 
 ---
 
@@ -40,7 +40,7 @@ For the simplest scenario, run this:
 python src/inference.py experiment_name=solaris
 ```
 
-It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will use a batch size of `1` and write generated videos to `./output/`.
+It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will use a batch size of `1` and write generated videos to `./output/`. For inference with a per-device batch size of `1`, the GPU device must have at least `48GB` memory. Refer to the [sharding](#sharding) section for details.
 
 ## Evaluation
 
@@ -54,7 +54,7 @@ To get the FID number, check the inference script log file. It outputs FID numbe
 
 ## Training
 
-Note that only TPU training is supported due to the large memory requirements on the GPU.
+Only TPU training is supported and requires a device with at least `95GB` of memory (`v5p`) with a per-device batch size of `1`. Refer to the [sharding](#sharding) section for details.
 
 ### Set up Python env
 
@@ -281,6 +281,10 @@ Below is a table summarizing all datasets in the codebase:
 | `eval_memory`               | [config/dataset/eval_memory.yaml](config/dataset/eval_memory.yaml)                             |          | ✓          |
 | `eval_movement_rotation`    | [config/dataset/eval_movement_rotation.yaml](config/dataset/eval_movement_rotation.yaml)       |          | ✓          |
 | `eval_movement_translation` | [config/dataset/eval_movement_translation.yaml](config/dataset/eval_movement_translation.yaml) |          | ✓          |
+
+## Sharding
+
+This codebase doesn't implement FSDP and fully replicates the optimizer/model states across all devices. We found that this setup is sufficient for inference on a `48GB` GPU and for training on a `95GB` TPU (`v5p`) with a per-device batch of `1`. However, with this setup, training OOMs on a`80GB` GPU, thus GPU training is not supported.
 
 ## Tests
 

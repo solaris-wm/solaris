@@ -5,7 +5,7 @@ import wandb
 from absl import logging
 from omegaconf import OmegaConf
 
-from src.utils.config import instantiate_from_config
+from src.utils.config import instantiate_from_config, resolve_device_paths
 from src.utils.jax import init_jax_distributed
 
 
@@ -30,6 +30,9 @@ def init_wandb(cfg):
     config_path="../config", config_name="train", version_base=None
 )  # no version to avoid warnings in cli
 def main(cfg):
+    # Hydra changes cwd, so resolve relative paths before anything else.
+    resolve_device_paths(cfg)
+
     # Enable JAX compilation cache
     # NOTE: we should import jax cache AFTER setting up the environment variables.
     import jax

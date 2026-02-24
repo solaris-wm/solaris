@@ -1,7 +1,7 @@
 train_dataset_name: ""
 test_dataset_name: "eval/translationEval/test"
 class: src.data.dataset.DatasetMultiplayer
-name: eval_translation
+name: eval_movement_translation
 multiplayer: true
 additional_params:
   bot1_name: "Alpha"

@@ -6,7 +6,6 @@ defaults:
   - dataset@eval_datasets.eval_building: eval_building
   - dataset@eval_datasets.eval_movement_translation: eval_movement_translation
   - dataset@eval_datasets.eval_movement_rotation: eval_movement_rotation
-  - dataset@eval_datasets.eval_structure: eval_structure
   - dataset@eval_datasets.eval_consistency: eval_consistency
   - dataset@eval_datasets.eval_consistency_opposite: eval_consistency_opposite
   - dataset@eval_datasets.eval_memory: eval_memory

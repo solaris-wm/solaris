@@ -1,4 +1,6 @@
-# Solaris
+# Overview
+
+![Solaris logo](assets/solaris-icon-light.png)
 
 This repository contains the JAX implementation of the Solaris multiplayer world model for Minecraft. It supports GCP TPU training and inference, and GPU inference. It also contains the source code for the VLM-as-a-judge multiplayer self-consistency metric.
 

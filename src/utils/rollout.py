@@ -142,7 +142,7 @@ def fully_denoise_frame_bidirectional_multiplayer(
         )
         frame = x_pred.astype(frame.dtype)
 
-        return frame, rngs
+    return frame, rngs
 
 
 def flow_prediction_to_x0(

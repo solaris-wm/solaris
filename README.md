@@ -269,21 +269,21 @@ The codebase supports three model architectures:
 
 This repository supports two types of datasets: training and evaluation datasets. The former is used for training and test loss calculation, and the latter for inference and metrics calculation.
 
-`vpt` and `duet` are two datasets that are both training and evaluation datasets, where inference for evaluation happens on their test splits. There are `7` evaluation-only datasets: `eval_building`, `eval_consistency_opposite`, `eval_consistency`, `eval_grounding`, `eval_memory`, `eval_movement_rotation`, and `eval_movement_translation`. Every dataset has a corresponding config file in [config/dataset/](config/dataset/), and every dataset that is used for evaluation has a dedicated `eval_ids` file in [src/data/eval_ids/](src/data/eval_ids/). The eval ids file together with `EvalBatchSampler()` defined in [src/data/batch_sampler.py](src/data/batch_sampler.py) ensure that evaluation always happens on the same episode segments regardless of the number of GPU/TPU devices used for inference.
+`vpt` and `duet` are two datasets that are both training and evaluation datasets, where inference for evaluation happens on their test splits. There are `7` evaluation-only datasets: `eval_structure` (Building), `eval_turn_to_look_opposite` (Consistency), `eval_turn_to_look` (Consistency), `eval_one_looks_away` (Grounding), `eval_both_look_away` (Memory), `eval_rotation` (Movement), and `eval_translation` (Movement). Every dataset has a corresponding config file in [config/dataset/](config/dataset/), and every dataset that is used for evaluation has a dedicated `eval_ids` file in [src/data/eval_ids/](src/data/eval_ids/). The eval ids file together with `EvalBatchSampler()` defined in [src/data/batch_sampler.py](src/data/batch_sampler.py) ensure that evaluation always happens on the same episode segments regardless of the number of GPU/TPU devices used for inference.
 
 Below is a table summarizing all datasets in the codebase:
 
-| Name                        | Config                                                                                         | Training | Evaluation |
-| --------------------------- | ---------------------------------------------------------------------------------------------- | -------- | ---------- |
-| `vpt`                       | [config/dataset/vpt.yaml](config/dataset/vpt.yaml)                                             | ✓        | ✓          |
-| `duet`                      | [config/dataset/duet.yaml](config/dataset/duet.yaml)                                           | ✓        | ✓          |
-| `eval_building`             | [config/dataset/eval_building.yaml](config/dataset/eval_building.yaml)                         |          | ✓          |
-| `eval_consistency`          | [config/dataset/eval_consistency.yaml](config/dataset/eval_consistency.yaml)                   |          | ✓          |
-| `eval_consistency_opposite` | [config/dataset/eval_consistency_opposite.yaml](config/dataset/eval_consistency_opposite.yaml) |          | ✓          |
-| `eval_grounding`            | [config/dataset/eval_grounding.yaml](config/dataset/eval_grounding.yaml)                       |          | ✓          |
-| `eval_memory`               | [config/dataset/eval_memory.yaml](config/dataset/eval_memory.yaml)                             |          | ✓          |
-| `eval_movement_rotation`    | [config/dataset/eval_movement_rotation.yaml](config/dataset/eval_movement_rotation.yaml)       |          | ✓          |
-| `eval_movement_translation` | [config/dataset/eval_movement_translation.yaml](config/dataset/eval_movement_translation.yaml) |          | ✓          |
+| Name                         | Config                                                                                           | Training | Evaluation |
+| ---------------------------- | ------------------------------------------------------------------------------------------------ | -------- | ---------- |
+| `vpt`                        | [config/dataset/vpt.yaml](config/dataset/vpt.yaml)                                               | ✓        | ✓          |
+| `duet`                       | [config/dataset/duet.yaml](config/dataset/duet.yaml)                                             | ✓        | ✓          |
+| `eval_structure`             | [config/dataset/eval_structure.yaml](config/dataset/eval_structure.yaml)                         |          | ✓          |
+| `eval_turn_to_look`          | [config/dataset/eval_turn_to_look.yaml](config/dataset/eval_turn_to_look.yaml)                   |          | ✓          |
+| `eval_turn_to_look_opposite` | [config/dataset/eval_turn_to_look_opposite.yaml](config/dataset/eval_turn_to_look_opposite.yaml) |          | ✓          |
+| `eval_one_looks_away`        | [config/dataset/eval_one_looks_away.yaml](config/dataset/eval_one_looks_away.yaml)               |          | ✓          |
+| `eval_both_look_away`        | [config/dataset/eval_both_look_away.yaml](config/dataset/eval_both_look_away.yaml)               |          | ✓          |
+| `eval_rotation`              | [config/dataset/eval_rotation.yaml](config/dataset/eval_rotation.yaml)                           |          | ✓          |
+| `eval_translation`           | [config/dataset/eval_translation.yaml](config/dataset/eval_translation.yaml)                     |          | ✓          |
 
 ## Sharding
 

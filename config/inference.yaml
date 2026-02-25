@@ -3,12 +3,12 @@ defaults:
   - device: gpu
   - model: solaris
   - runner: inference
-  # - dataset@eval_datasets.eval_building: eval_building
-  # - dataset@eval_datasets.eval_movement_translation: eval_movement_translation
-  # - dataset@eval_datasets.eval_movement_rotation: eval_movement_rotation
-  - dataset@eval_datasets.eval_consistency: eval_consistency
-  # - dataset@eval_datasets.eval_consistency_opposite: eval_consistency_opposite
-  # - dataset@eval_datasets.eval_memory: eval_memory
-  # - dataset@eval_datasets.eval_grounding: eval_grounding
+  - dataset@eval_datasets.eval_structure: eval_structure
+  - dataset@eval_datasets.eval_translation: eval_translation
+  - dataset@eval_datasets.eval_rotation: eval_rotation
+  - dataset@eval_datasets.eval_turn_to_look: eval_turn_to_look
+  - dataset@eval_datasets.eval_turn_to_look_opposite: eval_turn_to_look_opposite
+  - dataset@eval_datasets.eval_both_look_away: eval_both_look_away
+  - dataset@eval_datasets.eval_one_looks_away: eval_one_looks_away
 
   - _self_

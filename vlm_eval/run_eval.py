@@ -198,9 +198,8 @@ def identify_handler(folder_name: str, summary_json_path: str = None):
         MinecraftLooksAwayHandler,
         MinecraftBothLookAwayHandler,
         MinecraftStructureBuildingHandler,
-        MinecraftStructureNoPlaceHandler,
         MinecraftTurnToLookHandler,
-        MinecraftTurnToLookOppositeHandler
+        MinecraftTurnToLookOppositeHandler,
     )
 
     # List of all handler classes (order doesn't matter for exact matching)
@@ -216,7 +215,6 @@ def identify_handler(folder_name: str, summary_json_path: str = None):
     # Structure handlers require summary_json_path
     structure_handler_classes = [
         MinecraftStructureBuildingHandler,
-        MinecraftStructureNoPlaceHandler,
     ]
 
     # Check each handler for exact dataset name match

@@ -24,7 +24,6 @@ def main(cfg):
     if cfg.enable_jax_cache:
         setup_jax_cache(cfg.device.jax_cache_dir)
 
-    logging.info("Setting up jax distributed")
     init_jax_distributed(cfg)
 
     if not (jax.process_index() == 0):  # not first process

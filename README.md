@@ -44,6 +44,21 @@ CUDA_VISIABLE_DEVICES=0 python src/inference.py experiment_name=solaris device.e
 
 It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will generate `1` video per eval dataset and write generated videos to `./output/`. If you want to run on multiple GPUs, adjust the `CUDA_VISIABLE_DEVICES` env variable, making sure `device.eval_num_samples` is divisible by it. Inference always uses a per-device batch size of `1`, which requires the GPU device to have at least `48GB` memory. Refer to the [sharding](#sharding) section for details.
 
+<details>
+<summary>GPU warnings</summary>
+
+You might see the following GPU log messages:
+
+```text
+2026-02-25 08:28:29.343101: E external/xla/xla/stream_executor/cuda/cuda_timer.cc:86] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+2026-02-25 08:28:29.472418: E external/xla/xla/stream_executor/cuda/cuda_timer.cc:86] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+2026-02-25 08:28:34.231109: W external/xla/xla/tsl/framework/bfc_allocator.cc:310] Allocator (GPU_0_bfc) ran out of memory trying to allocate 36.68GiB with freed_by_count=0. The caller indicates that this is not a failure, but this may mean that there could be performance gains if more memory were available.
+```
+
+These are warnings and you can disregard them.
+
+</details>
+
 ## Evaluation
 
 ### VLM metric
@@ -116,6 +131,8 @@ The training pipeline consists of four stages, each backed by a dedicated [runne
 4. Stage 4 — Multiplayer self-forcing training
 
 Below are the four example commands to run each training stage. Edit the folder paths to where you set them up and run the command as part of `gcloud alpha compute tpus tpu-vm ssh --command {COMMAND}` in a multi-host setting.
+
+Note that running training automatically runs inference on the test split of the datasets. The training step and inference are JIT compiled functions which can time when running for the first time so the script might appear hanging at the beginning of the training and at the first evaluation.
 
 ### Stage 1 – Single-player bidirectional pretraining
 

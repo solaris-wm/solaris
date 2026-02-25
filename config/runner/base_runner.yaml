@@ -2,14 +2,14 @@ num_frames_eval: 33
 
 params:
   base_seed: 4
-  eval_num_samples: ${device.eval_batch_size}
+  eval_num_samples: ${device.eval_num_samples}
   eval_save_dir: ${device.output_dir}/${experiment_name}
   network_config: ${model.network_config}
 
   eval_dataloader_config:
     target: src.data.loader.build_data_loader
     params:
-      batch_size: ${device.eval_batch_size}
+      batch_size: ${device.eval_num_samples}
       num_workers: ${device.num_workers}
       num_frames: ${runner.num_frames_eval}
       seed_data: 16

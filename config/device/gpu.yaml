@@ -1,6 +1,6 @@
 name: "gpu"
 batch_size: 1
-eval_batch_size: 1
+eval_num_samples: 1
 num_workers: 8
 
 data_dir: datasets/

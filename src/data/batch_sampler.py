@@ -278,15 +278,7 @@ class EvalBatchSampler(torch.utils.data.Sampler):
             if num_global_samples is not None
             else len(self.ids)
         )
-        if dataset.dataset_name == "consistency":
-            # Respect the episode endpoints in self.ids as the videos in consistency dataset can be very short.
-            # Note that this will break batch collation for local batch size > 1
-            self.examples = [
-                SegmentId(episode_id, start, end)
-                for (episode_id, start, end) in self.ids
-            ]
-            self.num_frames = max(e.stop - e.start for e in self.examples)
-        elif isinstance(dataset, DatasetMultiplayer):
+        if isinstance(dataset, DatasetMultiplayer):
             self.examples = [
                 SegmentIdMultiplayer(
                     episode_id,

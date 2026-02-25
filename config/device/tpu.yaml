@@ -1,8 +1,7 @@
 name: "tpu"
 batch_size: 32
-eval_batch_size: 32
+eval_num_samples: 32
 num_workers: 8
-
 
 data_dir: null
 eval_data_dir: ${device.data_dir}

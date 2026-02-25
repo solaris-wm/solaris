@@ -39,10 +39,10 @@ See the [nyu-visionx/solaris-eval-datasets](https://huggingface.co/datasets/nyu-
 For the simplest scenario, run this:
 
 ```bash
-python src/inference.py experiment_name=solaris
+CUDA_VISIABLE_DEVICES=0 python src/inference.py experiment_name=solaris device.eval_num_samples=1
 ```
 
-It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will use a batch size of `1` and write generated videos to `./output/`. For inference with a per-device batch size of `1`, the GPU device must have at least `48GB` memory. Refer to the [sharding](#sharding) section for details.
+It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will generate `1` video per eval dataset and write generated videos to `./output/`. If you want to run on multiple GPUs, adjust the `CUDA_VISIABLE_DEVICES` env variable, making sure `device.eval_num_samples` is divisible by it. Inference always uses a per-device batch size of `1`, which requires the GPU device to have at least `48GB` memory. Refer to the [sharding](#sharding) section for details.
 
 ## Evaluation
 
@@ -127,10 +127,11 @@ python src/train.py \
         model=single_player \
         dataset=vpt \
         +dataset@eval_datasets.vpt=vpt \
+        ~dataset@eval_datasets.duet \
         experiment_name=sp_bidirectional_pretrain \
         wandb_entity="YOUR_WANDB_ENTITY" \
         device.batch_size=64 \
-        device.eval_batch_size=64 \
+        device.eval_num_samples=64 \
         device.data_dir="YOUR_DATASETS_DIR" \
         device.pretrained_model_dir="YOUR_PRETRAINED_MODEL_DIR" \
         device.output_dir="YOUR_OUTPUT_DIR" \

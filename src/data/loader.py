@@ -27,6 +27,9 @@ def build_data_loader(
     local_batch_size = batch_size // jax.process_count()
 
     if eval:
+        assert (
+            eval_num_samples == batch_size
+        ), "eval_num_samples should be equal to batch_size in eval mode"
         if (
             eval_pseudo_process_index is not None
             or eval_pseudo_process_count is not None

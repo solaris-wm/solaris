@@ -39,10 +39,10 @@ See the [nyu-visionx/solaris-eval-datasets](https://huggingface.co/datasets/nyu-
 For the simplest scenario, run this:
 
 ```bash
-CUDA_VISIABLE_DEVICES=0 python src/inference.py experiment_name=solaris device.eval_num_samples=1
+CUDA_VISIBLE_DEVICES=0 python src/inference.py experiment_name=solaris device.eval_num_samples=1
 ```
 
-It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will generate `1` video per eval dataset and write generated videos to `./output/`. If you want to run on multiple GPUs, adjust the `CUDA_VISIABLE_DEVICES` env variable, making sure `device.eval_num_samples` is divisible by it. Inference always uses a per-device batch size of `1`, which requires the GPU device to have at least `48GB` memory. Refer to the [sharding](#sharding) section for details.
+It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will generate `1` video per eval dataset and write generated videos to `./output/`. If you want to run on multiple GPUs, adjust the `CUDA_VISIBLE_DEVICES` env variable, making sure `device.eval_num_samples` is divisible by it. Inference always uses a per-device batch size of `1`, which requires the GPU device to have at least `48GB` memory. Refer to the [sharding](#sharding) section for details.
 
 <details>
 <summary>GPU warnings</summary>

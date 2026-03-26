@@ -9,7 +9,8 @@ params:
   eval_dataloader_config:
     target: src.data.loader.build_data_loader
     params:
-      batch_size: ${device.eval_num_samples}
+      # Global eval minibatch: device.eval_minibatch_size (see device/tpu.yaml).
+      batch_size: ${device.eval_minibatch_size}
       num_workers: ${device.num_workers}
       num_frames: ${runner.num_frames_eval}
       seed_data: 16

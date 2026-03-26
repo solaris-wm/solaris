@@ -21,15 +21,28 @@ def build_data_loader(
     eval_pseudo_process_count=None,
     seed_offset=None,
 ):
-    """Build loader for torch Dataset."""
+    """Build a torch DataLoader.
+
+    In eval mode, ``batch_size`` is the global per-step minibatch
+    (``device.eval_minibatch_size``); ``eval_num_samples`` is how many eval
+    segments to run in total (``device.eval_num_samples`` / runner param).
+    """
 
     batch_size = batch_size
     local_batch_size = batch_size // jax.process_count()
 
     if eval:
-        assert (
-            eval_num_samples == batch_size
-        ), "eval_num_samples should be equal to batch_size in eval mode"
+        assert eval_num_samples is not None, "eval_num_samples is required in eval mode"
+        assert batch_size > 0, "batch_size must be positive in eval mode"
+        assert batch_size <= eval_num_samples, (
+            f"global batch_size ({batch_size}) must be <= eval_num_samples "
+            f"({eval_num_samples}); lower device.eval_minibatch_size (or raise "
+            f"eval_num_samples)"
+        )
+        assert batch_size % jax.process_count() == 0, (
+            f"batch_size ({batch_size}) must be divisible by jax.process_count() "
+            f"({jax.process_count()})"
+        )
         if (
             eval_pseudo_process_index is not None
             or eval_pseudo_process_count is not None

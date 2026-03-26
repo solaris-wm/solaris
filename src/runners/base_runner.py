@@ -166,12 +166,16 @@ class BaseRunner(abc.ABC):
         )
 
     def robust_batch_sample(self, loader_iter, num_retries=5):
-
-        for _ in range(num_retries):
+        for attempt in range(num_retries):
             try:
                 return next(loader_iter)
             except VideoReadError:
-                logging.info("Process %s retrying to load batch", jax.process_index())
+                logging.warning(
+                    "[Process %s] VideoReadError on attempt %d/%d, retrying",
+                    jax.process_index(),
+                    attempt + 1,
+                    num_retries,
+                )
         raise RuntimeError("Failed to load batch")
 
     def globalize_batch(self, batch):

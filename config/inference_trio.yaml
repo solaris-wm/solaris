@@ -1,0 +1,20 @@
+#
+# Three-player inference on the test split of the `trio` dataset.
+#
+defaults:
+  - shared
+  - device: gpu
+  - model: solaris
+  - runner: inference
+  - dataset@eval_datasets.trio: trio
+
+  - _self_
+
+model:
+  network_config:
+    params:
+      num_players: 3
+
+runner:
+  params:
+    model_weights_path: ${device.pretrained_model_dir}/3_player_sf_1200.pt

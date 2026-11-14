@@ -1,0 +1,8 @@
+train_dataset_name: "trio/train"
+test_dataset_name: "trio/test"
+class: src.data.dataset.DatasetMultiplayer
+name: trio
+multiplayer: true
+additional_params:
+  bot_names: ["Alpha", "Bravo", "Charlie"]
+  shuffle_bots: ${shuffle_bots}

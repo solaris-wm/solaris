@@ -17,6 +17,7 @@ Conventions (matrix-game):
 This module is the single source of truth for these multiplayer reshapes.
 """
 
+import jax.numpy as jnp
 from einops import rearrange
 
 
@@ -85,26 +86,35 @@ def handle_multiplayer_input(
 
 
 def handle_multiplayer_output(
-    video_BPFHWC,
+    output,
     multiplayer_method,
     num_players=2,
 ):
     """
     Reverse the reshaping for multiplayer methods to recover original player dimension.
 
+    Works for any tensor whose last axis holds the player-concatenated features and
+    whose second axis is the collapsed P=1 effective-player dimension, e.g.
+    ``(B, 1, F, H, W, P*C)`` or ``(B, 1, T, P*D)``.
+
     Args:
-        video_BPFHWC: Video data (may have P=1 after concat method)
+        output: Data with P_eff=1 after a concat method, or P players for attn.
         multiplayer_method: One of 'multiplayer_attn' or 'concat_c'
         num_players: Number of players to split into
 
     Returns:
-        Video with shape (batch, players, frames, height, width, channels)
+        Tensor with shape (B, players, ..., per_player_last_dim)
     """
     if multiplayer_method == "concat_c":
-        # Split concatenated channels back into player dimension
-        video_BPFHWC = rearrange(
-            video_BPFHWC, "b 1 f h w (p c) -> b p f h w c", p=num_players
-        )
+        # Split last dim into (num_players, per_player_dim), then move the new
+        # player axis to position 1 and drop the old P=1 axis.
+        *leading, last_dim = output.shape
+        per_player_dim = last_dim // num_players
+        output = output.reshape(*leading, num_players, per_player_dim)
+        # axes: (b, 1, ..., p, d) -> (b, p, 1, ..., d)
+        output = jnp.moveaxis(output, -2, 1)
+        # squeeze the old P=1 dim (now at position 2)
+        output = output[:, :, 0, ...]
 
     # For multiplayer_method == "multiplayer_attn", return unchanged
-    return video_BPFHWC
+    return output

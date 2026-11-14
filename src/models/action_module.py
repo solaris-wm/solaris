@@ -433,7 +433,7 @@ class ActionModule(nnx.Module):
             S = th * tw
             B, TS, H, D = q_blhd.shape
             T_ = TS // S
-            assert S == 880 or S == 1760  # if using mp method
+            assert S == 880
 
             q_blhd = (
                 q_blhd.reshape(B, T_, S, H, D)

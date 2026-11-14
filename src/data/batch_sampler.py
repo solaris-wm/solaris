@@ -103,87 +103,62 @@ class BatchSamplerMultiplayer(torch.utils.data.Sampler):
         if episode_id in self._episode_infos:
             return self._episode_infos[episode_id]
         episode_paths = self.dataset.get_episode_paths(episode_id)
-        with open(
-            self.dataset.directory / episode_paths["bot1_actions_path"], "r"
-        ) as f:
-            bot1_actions = json.load(f)
-        with open(
-            self.dataset.directory / episode_paths["bot2_actions_path"], "r"
-        ) as f:
-            bot2_actions = json.load(f)
-        if len(bot1_actions) < 1 or len(bot2_actions) < 1:
-            self._episode_infos[episode_id] = None
-            logging.warning(
-                f"Episode {episode_id} {episode_paths} has less than 1 action, resampling"
-            )
-            return self._episode_infos[episode_id]
-        start_time = max(
-            bot1_actions[0]["renderTime"],
-            bot2_actions[0]["renderTime"],
-        )
-        end_time = min(
-            bot1_actions[-1]["renderTime"],
-            bot2_actions[-1]["renderTime"],
-        )
 
-        # Binary search for index ranges within [start_time, end_time]
-        bot1_times = [a["renderTime"] for a in bot1_actions]
-        bot2_times = [a["renderTime"] for a in bot2_actions]
+        all_actions = []
+        for ap in episode_paths["actions_paths"]:
+            with open(self.dataset.directory / ap, "r") as f:
+                bot_actions = json.load(f)
+            if len(bot_actions) < 1:
+                self._episode_infos[episode_id] = None
+                logging.warning(
+                    f"Episode {episode_id} {episode_paths} has less than 1 action, resampling"
+                )
+                return self._episode_infos[episode_id]
+            all_actions.append(bot_actions)
 
-        # Ensure times are strictly increasing for both bots
-        bot1_times_increasing = (
-            all(t_next > t_prev for t_prev, t_next in zip(bot1_times, bot1_times[1:])),
-            "bot1_times must be strictly increasing",
-        )
-        bot2_times_increasing = (
-            all(t_next > t_prev for t_prev, t_next in zip(bot2_times, bot2_times[1:])),
-            "bot2_times must be strictly increasing",
-        )
-        if not bot1_times_increasing or not bot2_times_increasing:
-            self._episode_infos[episode_id] = None
-            logging.warning(
-                f"Episode {episode_id} {episode_paths} has non-increasing times, resampling"
-            )
-            return self._episode_infos[episode_id]
+        # Overlapping time window across all bots
+        start_time = max(actions[0]["renderTime"] for actions in all_actions)
+        end_time = min(actions[-1]["renderTime"] for actions in all_actions)
 
-        # Leftmost index >= start_time
-        bot1_start_idx = bisect.bisect_left(bot1_times, start_time)
-        bot2_start_idx = bisect.bisect_left(bot2_times, start_time)
-        # Rightmost index <= end_time
-        bot1_end_idx = bisect.bisect_right(bot1_times, end_time) - 1
-        bot2_end_idx = bisect.bisect_right(bot2_times, end_time) - 1
-        bot1_end_idx -= self.num_frames
-        bot2_end_idx -= self.num_frames
-        if (
-            bot1_end_idx - bot1_start_idx < 1
-            or bot2_end_idx - bot2_start_idx < 1
-            or bot1_end_idx < 0
-            or bot2_end_idx < 0
-            or bot1_start_idx >= len(bot1_actions)
-            or bot2_start_idx >= len(bot2_actions)
-        ):
-            self._episode_infos[episode_id] = None
-            logging.warning(
-                f"Episode {episode_id} {episode_paths} doesn't have enough actions. "
-                f"bot1_start_idx: {bot1_start_idx}, bot1_end_idx: {bot1_end_idx}, bot2_start_idx: {bot2_start_idx}, bot2_end_idx: {bot2_end_idx}, "
-                f"bot1_actions: {len(bot1_actions)}, bot2_actions: {len(bot2_actions)}, "
-                f"resampling"
-            )
-            return self._episode_infos[episode_id]
+        # Extract render times for each bot
+        all_times = [[a["renderTime"] for a in actions] for actions in all_actions]
+
+        # Ensure times are strictly increasing for all bots
+        for i, times in enumerate(all_times):
+            if not all(t_next > t_prev for t_prev, t_next in zip(times, times[1:])):
+                self._episode_infos[episode_id] = None
+                logging.warning(
+                    f"Episode {episode_id} {episode_paths} bot{i + 1} has non-increasing times, resampling"
+                )
+                return self._episode_infos[episode_id]
+
+        # Compute valid index ranges for each bot
+        start_indices = [bisect.bisect_left(times, start_time) for times in all_times]
+        end_indices = [
+            bisect.bisect_right(times, end_time) - 1 - self.num_frames
+            for times in all_times
+        ]
+
+        for i, (si, ei) in enumerate(zip(start_indices, end_indices)):
+            if ei - si < 1 or ei < 0 or si >= len(all_actions[i]):
+                self._episode_infos[episode_id] = None
+                logging.warning(
+                    f"Episode {episode_id} {episode_paths} doesn't have enough actions for bot{i + 1}. "
+                    f"start_idx: {si}, end_idx: {ei}, num_actions: {len(all_actions[i])}, dataset_dir: {self.dataset.directory}, resampling"
+                )
+                return self._episode_infos[episode_id]
+
         start_time = min(
-            bot1_actions[bot1_start_idx]["renderTime"],
-            bot2_actions[bot2_start_idx]["renderTime"],
+            all_actions[i][si]["renderTime"] for i, si in enumerate(start_indices)
         )
         end_time = min(
-            bot1_actions[bot1_end_idx]["renderTime"],
-            bot2_actions[bot2_end_idx]["renderTime"],
+            all_actions[i][ei]["renderTime"] for i, ei in enumerate(end_indices)
         )
 
         self._episode_infos[episode_id] = {
             "start_time": start_time,
             "end_time": end_time,
-            "bot1_times": bot1_times,
-            "bot2_times": bot2_times,
+            "all_times": all_times,
         }
         return self._episode_infos[episode_id]
 
@@ -207,23 +182,10 @@ class BatchSamplerMultiplayer(torch.utils.data.Sampler):
                     episode_info["start_time"], episode_info["end_time"]
                 )
 
-                # Find the corresponding frame indices for both bots
-                bot1_times = episode_info["bot1_times"]
-                bot2_times = episode_info["bot2_times"]
-
-                bot1_start_idx = bisect.bisect_left(bot1_times, start_time)
-                bot2_start_idx = bisect.bisect_left(bot2_times, start_time)
-                bot1_stop_idx = bot1_start_idx + self.num_frames
-                bot2_stop_idx = bot2_start_idx + self.num_frames
-                segment_ids.append(
-                    SegmentIdMultiplayer(
-                        episode_id,
-                        bot1_start_idx,
-                        bot1_stop_idx,
-                        bot2_start_idx,
-                        bot2_stop_idx,
-                    )
-                )
+                all_times = episode_info["all_times"]
+                starts = [bisect.bisect_left(times, start_time) for times in all_times]
+                stops = [s + self.num_frames for s in starts]
+                segment_ids.append(SegmentIdMultiplayer(episode_id, starts, stops))
                 if len(segment_ids) >= self.batch_size:
                     break
 
@@ -279,16 +241,19 @@ class EvalBatchSampler(torch.utils.data.Sampler):
             else len(self.ids)
         )
         if isinstance(dataset, DatasetMultiplayer):
-            self.examples = [
-                SegmentIdMultiplayer(
-                    episode_id,
-                    bot1_start,
-                    bot1_start + self.num_frames,
-                    bot2_start,
-                    bot2_start + self.num_frames,
+            # eval_ids entry format: [episode_id, bot1_start, bot1_stop, bot2_start, bot2_stop, ...]
+            self.examples = []
+            for entry in self.ids:
+                episode_id = entry[0]
+                pairs = entry[1:]
+                starts = [pairs[i * 2] for i in range(len(pairs) // 2)]
+                self.examples.append(
+                    SegmentIdMultiplayer(
+                        episode_id,
+                        starts,
+                        [s + self.num_frames for s in starts],
+                    )
                 )
-                for (episode_id, bot1_start, _, bot2_start, _) in self.ids
-            ]
         else:
             # For other datasets, replace the endpoint with start + self.num_frames
             # Note this could potentially lead to an error later on when calling Dataset.__getitem__(...) if out of bounds

@@ -234,6 +234,115 @@ python src/inference.py \
 
 It will use `YOUR_PRETRAINED_MODEL_DIR/solaris.pt` model weights for inference.
 
+## Three-player model
+
+The codebase also supports a three-player world model. You train it on the `Trio` dataset. The pipeline reuses the [training stages](#training-stages) above. It starts at Stage 2 from the released two-player Solaris bidirectional checkpoint `mp_bidirectional_120000.pt`, which is available in [nyu-visionx/solaris](https://huggingface.co/nyu-visionx/solaris).
+
+The model config sets the number of players with `model.network_config.params.num_players`. The dataset config sets the bot names with `bot_names`. Each episode must have one video and one actions file for each bot. See [config/dataset/trio.yaml](config/dataset/trio.yaml).
+
+### Download the Trio dataset
+
+```bash
+hf download nyu-visionx/solaris-training-dataset --local-dir YOUR_STORAGE_PATH/datasets --repo-type dataset --include "trio/*"
+```
+
+### Stage 2 – Three-player bidirectional
+
+Run Stage 2 on `Trio` for 30K steps. It starts from the two-player bidirectional checkpoint. The two-player checkpoint has a player embedding table with 2 rows, and the three-player model has 3 rows. The flag `runner.params.pretrained_model_strict_load=False` lets the checkpointer load the checkpoint anyway. It copies the 2 rows and fills the third row with zeros.
+
+```bash
+python src/train.py \
+        runner=trainer_mp_bidirectional \
+        runner.params.total_steps=30000 \
+        runner.params.pretrained_model_path=YOUR_PRETRAINED_MODEL_DIR/mp_bidirectional_120000.pt \
+        runner.params.pretrained_model_strict_load=False \
+        dataset=trio \
+        ~dataset@eval_datasets.duet \
+        +dataset@eval_datasets.trio=trio \
+        experiment_name=3_player_bidirectional \
+        model.network_config.params.num_players=3 \
+        wandb_entity="YOUR_WANDB_ENTITY" \
+        device.data_dir="YOUR_DATASETS_DIR" \
+        device.pretrained_model_dir="YOUR_PRETRAINED_MODEL_DIR" \
+        device.output_dir="YOUR_OUTPUT_DIR" \
+        device.checkpoint_dir="YOUR_CHECKPOINT_DIR" \
+        device.jax_cache_dir="YOUR_JAX_CACHE_DIR"
+```
+
+It saves the final weights to `YOUR_PRETRAINED_MODEL_DIR/3_player_bidirectional_30000.pt`. This checkpoint is the initialization for Stage 3 and the teacher and critic in Stage 4.
+
+### Stage 3 – Three-player causal
+
+Run Stage 3 on `Trio` for 45K steps. It starts from the Stage 2 three-player checkpoint:
+
+```bash
+python src/train.py \
+        runner=trainer_mp_causal \
+        runner.params.total_steps=45000 \
+        runner.params.pretrained_model_path=YOUR_PRETRAINED_MODEL_DIR/3_player_bidirectional_30000.pt \
+        dataset=trio \
+        ~dataset@eval_datasets.duet \
+        +dataset@eval_datasets.trio=trio \
+        model.network_config.params.num_players=3 \
+        experiment_name=3_player_causal \
+        wandb_entity="YOUR_WANDB_ENTITY" \
+        device.data_dir="YOUR_DATASETS_DIR" \
+        device.pretrained_model_dir="YOUR_PRETRAINED_MODEL_DIR" \
+        device.output_dir="YOUR_OUTPUT_DIR" \
+        device.checkpoint_dir="YOUR_CHECKPOINT_DIR" \
+        device.jax_cache_dir="YOUR_JAX_CACHE_DIR"
+```
+
+It saves the final weights to `YOUR_PRETRAINED_MODEL_DIR/3_player_causal_45000.pt`. This checkpoint is the student initialization for Stage 4.
+
+### Stage 4 – Three-player self-forcing
+
+Run Stage 4 on `Trio` for 1.2K steps. The three-player causal checkpoint initializes the student. The three-player bidirectional checkpoint initializes the teacher and the critic:
+
+```bash
+python src/train.py \
+        runner=trainer_mp_sf \
+        runner.params.total_steps=1200 \
+        runner.params.causal_checkpoint_path=YOUR_PRETRAINED_MODEL_DIR/3_player_causal_45000.pt \
+        runner.params.bidirectional_checkpoint_path=YOUR_PRETRAINED_MODEL_DIR/3_player_bidirectional_30000.pt \
+        dataset=trio \
+        ~dataset@eval_datasets.duet \
+        +dataset@eval_datasets.trio=trio \
+        model.network_config.params.num_players=3 \
+        experiment_name=3_player_sf \
+        wandb_entity="YOUR_WANDB_ENTITY" \
+        device.data_dir="YOUR_DATASETS_DIR" \
+        device.pretrained_model_dir="YOUR_PRETRAINED_MODEL_DIR" \
+        device.output_dir="YOUR_OUTPUT_DIR" \
+        device.checkpoint_dir="YOUR_CHECKPOINT_DIR" \
+        device.jax_cache_dir="YOUR_JAX_CACHE_DIR"
+```
+
+It saves the final three-player model weights to `YOUR_PRETRAINED_MODEL_DIR/3_player_sf_1200.pt`. Use these weights for inference.
+
+### Three-player inference
+
+The [config/inference_trio.yaml](config/inference_trio.yaml) config runs inference on the test split of `Trio`. It sets `num_players` to `3` and uses the weights at `pretrained/3_player_sf_1200.pt`:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/inference.py --config-name inference_trio experiment_name=solaris_trio device.eval_num_samples=1
+```
+
+It expects the dataset in `./datasets/trio/test` and writes the generated videos to `./output/`. Three players use more GPU memory than two players.
+
+### Eval ids for a new multiplayer dataset
+
+Every evaluation dataset needs an eval ids file. Each entry has the form `[episode_id, start_1, stop_1, ..., start_N, stop_N]`, with one start and one stop for each bot. The script [scripts/data/prepare_eval_ids.py](scripts/data/prepare_eval_ids.py) generates this file. This command generates [src/data/eval_ids/eval_ids_trio.json](src/data/eval_ids/eval_ids_trio.json):
+
+```bash
+python scripts/data/prepare_eval_ids.py \
+        --data-dir YOUR_DATASETS_DIR/trio \
+        --split test \
+        --dataset-name trio \
+        --multiplayer \
+        --bot-names Alpha Bravo Charlie
+```
+
 ## Code dive-in
 
 ### Configuration
@@ -286,7 +395,7 @@ The codebase supports three model architectures:
 
 This repository supports two types of datasets: training and evaluation datasets. The former is used for training and test loss calculation, and the latter for inference and metrics calculation.
 
-`vpt` and `duet` are two datasets that are both training and evaluation datasets, where inference for evaluation happens on their test splits. There are `7` evaluation-only datasets: `eval_structure` (Building), `eval_turn_to_look_opposite` (Consistency), `eval_turn_to_look` (Consistency), `eval_one_looks_away` (Grounding), `eval_both_look_away` (Memory), `eval_rotation` (Movement), and `eval_translation` (Movement). Every dataset has a corresponding config file in [config/dataset/](config/dataset/), and every dataset that is used for evaluation has a dedicated `eval_ids` file in [src/data/eval_ids/](src/data/eval_ids/). The eval ids file together with `EvalBatchSampler()` defined in [src/data/batch_sampler.py](src/data/batch_sampler.py) ensure that evaluation always happens on the same episode segments regardless of the number of GPU/TPU devices used for inference.
+`vpt`, `duet`, and `trio` are three datasets that are both training and evaluation datasets, where inference for evaluation happens on their test splits. `trio` is the three-player dataset (see [Three-player model](#three-player-model)). There are `7` evaluation-only datasets: `eval_structure` (Building), `eval_turn_to_look_opposite` (Consistency), `eval_turn_to_look` (Consistency), `eval_one_looks_away` (Grounding), `eval_both_look_away` (Memory), `eval_rotation` (Movement), and `eval_translation` (Movement). Every dataset has a corresponding config file in [config/dataset/](config/dataset/), and every dataset that is used for evaluation has a dedicated `eval_ids` file in [src/data/eval_ids/](src/data/eval_ids/). The eval ids file together with `EvalBatchSampler()` defined in [src/data/batch_sampler.py](src/data/batch_sampler.py) ensure that evaluation always happens on the same episode segments regardless of the number of GPU/TPU devices used for inference.
 
 Below is a table summarizing all datasets in the codebase:
 
@@ -294,6 +403,7 @@ Below is a table summarizing all datasets in the codebase:
 | ---------------------------- | ------------------------------------------------------------------------------------------------ | -------- | ---------- |
 | `vpt`                        | [config/dataset/vpt.yaml](config/dataset/vpt.yaml)                                               | ✓        | ✓          |
 | `duet`                       | [config/dataset/duet.yaml](config/dataset/duet.yaml)                                             | ✓        | ✓          |
+| `trio`                       | [config/dataset/trio.yaml](config/dataset/trio.yaml)                                             | ✓        | ✓          |
 | `eval_structure`             | [config/dataset/eval_structure.yaml](config/dataset/eval_structure.yaml)                         |          | ✓          |
 | `eval_turn_to_look`          | [config/dataset/eval_turn_to_look.yaml](config/dataset/eval_turn_to_look.yaml)                   |          | ✓          |
 | `eval_turn_to_look_opposite` | [config/dataset/eval_turn_to_look_opposite.yaml](config/dataset/eval_turn_to_look_opposite.yaml) |          | ✓          |

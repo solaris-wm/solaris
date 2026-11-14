@@ -330,19 +330,6 @@ CUDA_VISIBLE_DEVICES=0 python src/inference.py --config-name inference_trio expe
 
 It expects the dataset in `./datasets/trio/test` and writes the generated videos to `./output/`. Three players use more GPU memory than two players.
 
-### Eval ids for a new multiplayer dataset
-
-Every evaluation dataset needs an eval ids file. Each entry has the form `[episode_id, start_1, stop_1, ..., start_N, stop_N]`, with one start and one stop for each bot. The script [scripts/data/prepare_eval_ids.py](scripts/data/prepare_eval_ids.py) generates this file. This command generates [src/data/eval_ids/eval_ids_trio.json](src/data/eval_ids/eval_ids_trio.json):
-
-```bash
-python scripts/data/prepare_eval_ids.py \
-        --data-dir YOUR_DATASETS_DIR/trio \
-        --split test \
-        --dataset-name trio \
-        --multiplayer \
-        --bot-names Alpha Bravo Charlie
-```
-
 ## Code dive-in
 
 ### Configuration

@@ -19,3 +19,6 @@ pretrained/
 output/
 checkpoint/
 jax_cache/
+
+# Claude Code local files
+.claude/

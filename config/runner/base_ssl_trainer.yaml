@@ -3,7 +3,7 @@ defaults:
   - _self_
 params:
   lr_scheduler_config: ${lr_scheduler}
-
+  pretrained_model_strict_load: True
   optimizer_config:
     enable_grad_accumulation: False
     grad_accum_steps: 1

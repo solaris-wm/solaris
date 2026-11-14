@@ -2,7 +2,6 @@ import jax
 import jax.experimental
 import jax.experimental.multihost_utils
 import jax.numpy as jnp
-from absl import logging
 from einops import repeat
 
 from src.runners.base_mp_runner import BaseMPRunner, get_model_inputs
@@ -12,26 +11,6 @@ from src.utils.rollout import left_repeat_padding
 
 
 class Trainer(BaseSSLTrainer, BaseMPRunner):
-
-    def _load_pretrained_model(self, pretrained_model_path, model_state):
-        logging.info(
-            "Restoring world model from checkpoint %s for multiplayer_method=%s",
-            pretrained_model_path,
-            self.multiplayer_method,
-        )
-        # mp causal model starts from mp bidirectional so it should be strict always.
-        if self.multiplayer_method == "concat_c" and self.bidirectional:
-            model_state = self.pretrained_checkpointer.restore(
-                pretrained_model_path,
-                model_state,
-                strict=False,
-            )
-        else:
-            model_state = self.pretrained_checkpointer.restore(
-                pretrained_model_path,
-                model_state,
-            )
-        return model_state
 
     def _diffusion_loss_core(
         self,

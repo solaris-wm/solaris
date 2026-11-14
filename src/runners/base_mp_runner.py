@@ -187,6 +187,7 @@ class BaseMPRunner(BaseRunner):
         num_denoising_steps=None,
     ):
         num_eval_frames = video.shape[2]
+        num_players = video.shape[1]
         processed_video_BPFHWC = wan_image_condition_preprocess(video, 352, 640)
         video = change_tensor_range(
             processed_video_BPFHWC, [-1, 1], [0, 255], dtype=jnp.uint8
@@ -254,7 +255,7 @@ class BaseMPRunner(BaseRunner):
                 )
                 # Reverse multiplayer preprocessing
                 final_frame_BPFHWC = handle_multiplayer_output(
-                    final_frame_BPFHWC, self.multiplayer_method, num_players=2
+                    final_frame_BPFHWC, self.multiplayer_method, num_players=num_players
                 )
                 B = final_frame_BPFHWC.shape[0]
                 decoded_final_frame_BPFHWC = rearrange(
@@ -351,7 +352,7 @@ class BaseMPRunner(BaseRunner):
 
         fid_calculator = None
         if "fid" in metrics:
-            fid_calculator = FIDCalculator(num_sources=2)
+            fid_calculator = FIDCalculator(num_sources=num_players)
             # Calculate metrics using shared function
         pred_frames = rearrange(rollout_frames_BPFHWC, "b p f h w c -> b f p h w c")[
             :, n_prompt_frames:

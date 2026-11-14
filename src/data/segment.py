@@ -19,19 +19,18 @@ class SegmentId:
 @dataclass
 class SegmentIdMultiplayer:
     episode_id: Union[int, str]
-    bot1_start: int
-    bot1_stop: int
-    bot2_start: int
-    bot2_stop: int
+    starts: list[int]
+    stops: list[int]
+
+    @property
+    def num_bots(self) -> int:
+        return len(self.starts)
 
     def to_list(self) -> list[int]:
-        return [
-            self.episode_id,
-            self.bot1_start,
-            self.bot1_stop,
-            self.bot2_start,
-            self.bot2_stop,
-        ]
+        result = [self.episode_id]
+        for s, e in zip(self.starts, self.stops):
+            result.extend([s, e])
+        return result
 
 
 @dataclass

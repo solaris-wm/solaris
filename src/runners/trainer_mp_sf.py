@@ -432,7 +432,7 @@ def self_forcing_rollout(
         )
         return previous_frame, frame, (rngs, new_kv_cache, frame_index + 1)
 
-    kv_cache = model.initialize_kv_cache(B, H // 2, W // 2, num_players=P)
+    kv_cache = model.initialize_kv_cache(B, H // 2, W // 2, eff_p=P)
     previous_frame_BPFRHWC, final_frame_BPFRHWC, (rngs, _, _) = denoise_frame(
         repeat(cond_concat_BPFHWC, "b p f h w c -> b p f r h w c", r=1),
         mouse_actions_BPFWD,

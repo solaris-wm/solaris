@@ -19,6 +19,7 @@ class BaseSSLTrainer(BaseTrainer):
         lr_scheduler_config,
         optimizer_config,
         pretrained_model_path=None,
+        pretrained_model_strict_load=True,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -27,7 +28,7 @@ class BaseSSLTrainer(BaseTrainer):
         self.lr_scheduler_config = lr_scheduler_config
         self.optimizer_config = optimizer_config
         self.pretrained_model_path = pretrained_model_path
-
+        self.pretrained_model_strict_load = pretrained_model_strict_load
         self.lr_scheduler = instantiate_from_config(self.lr_scheduler_config)
         self.optimizer_graph, self.optimizer_state, self.optimizer_sharding = (
             self.build_optimizer_from_pretrained_model(
@@ -38,6 +39,7 @@ class BaseSSLTrainer(BaseTrainer):
                 rngs=self.rngs,
                 mesh=self.mesh,
                 repl_sharding=self.repl_sharding,
+                strict=self.pretrained_model_strict_load,
             )
         )
 

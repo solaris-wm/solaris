@@ -119,8 +119,7 @@ class DatasetMultiplayer(TorchDataset):
         self,
         data_dir,
         dataset_name,
-        bot1_name,
-        bot2_name,
+        bot_names,
         converters,
         obs_resize=None,
         shuffle_bots=True,
@@ -130,8 +129,7 @@ class DatasetMultiplayer(TorchDataset):
 
         self.dataset_name = dataset_name
         self.directory = Path(data_dir).expanduser()
-        self.bot1_name = bot1_name
-        self.bot2_name = bot2_name
+        self.bot_names = list(bot_names)
         self._obs_resize = obs_resize
         self._converters = [input_converters[c] for c in converters]
         self._shuffle_bots = shuffle_bots
@@ -140,45 +138,46 @@ class DatasetMultiplayer(TorchDataset):
         self._rng = random.Random(shuffle_bot_seed)
         self._episodes = {}
 
+        anchor_name = self.bot_names[0]
         mp4_files = sorted(
-            [p for p in self.directory.glob(f"*_{self.bot1_name}_*.mp4")],
+            [p for p in self.directory.glob(f"*_{anchor_name}_*.mp4")],
             key=lambda p: p.name,
         )
         episode_id = 0
 
-        for video_path_bot1 in mp4_files:
-            name = video_path_bot1.name
+        for anchor_video_path in mp4_files:
+            anchor_name_str = anchor_video_path.name
 
-            # Form the expected counterpart filename for bot2 by swapping bot name
-            counterpart_name = name.replace(
-                f"_{self.bot1_name}_", f"_{self.bot2_name}_", 1
-            )
-            video_path_bot2 = self.directory / counterpart_name
-
-            # Corresponding action files must exist and share the same stem
-            actions_path_bot1 = video_path_bot1.with_suffix(".json")
-            actions_path_bot2 = video_path_bot2.with_suffix(".json")
-            # If the action file ends with '_camera.json', replace it with '.json'
-            if actions_path_bot1.name.endswith("_camera.json"):
-                actions_path_bot1 = actions_path_bot1.with_name(
-                    actions_path_bot1.name.replace("_camera.json", ".json")
+            video_paths = [anchor_video_path]
+            actions_path = anchor_video_path.with_suffix(".json")
+            if actions_path.name.endswith("_camera.json"):
+                actions_path = actions_path.with_name(
+                    actions_path.name.replace("_camera.json", ".json")
                 )
-            if actions_path_bot2.name.endswith("_camera.json"):
-                actions_path_bot2 = actions_path_bot2.with_name(
-                    actions_path_bot2.name.replace("_camera.json", ".json")
-                )
+            actions_paths = [actions_path]
 
-            # Validate existence of all four files
-            if (
-                video_path_bot2.exists()
-                and actions_path_bot1.exists()
-                and actions_path_bot2.exists()
-            ):
+            # Find counterpart files for each additional bot
+            valid = actions_path.exists()
+            for other_name in self.bot_names[1:]:
+                counterpart_name = anchor_name_str.replace(
+                    f"_{anchor_name}_", f"_{other_name}_", 1
+                )
+                other_video_path = self.directory / counterpart_name
+                other_actions_path = other_video_path.with_suffix(".json")
+                if other_actions_path.name.endswith("_camera.json"):
+                    other_actions_path = other_actions_path.with_name(
+                        other_actions_path.name.replace("_camera.json", ".json")
+                    )
+                if not (other_video_path.exists() and other_actions_path.exists()):
+                    valid = False
+                    break
+                video_paths.append(other_video_path)
+                actions_paths.append(other_actions_path)
+
+            if valid:
                 self._episodes[episode_id] = {
-                    "bot1_video_path": video_path_bot1.name,
-                    "bot1_actions_path": actions_path_bot1.name,
-                    "bot2_video_path": video_path_bot2.name,
-                    "bot2_actions_path": actions_path_bot2.name,
+                    "video_paths": [p.name for p in video_paths],
+                    "actions_paths": [p.name for p in actions_paths],
                 }
                 episode_id += 1
 
@@ -199,66 +198,56 @@ class DatasetMultiplayer(TorchDataset):
 
     def __getitem__(self, segment_id):
         episode_paths = self.get_episode_paths(segment_id.episode_id)
-        video_path_bot1 = self.directory / episode_paths["bot1_video_path"]
-        video_path_bot2 = self.directory / episode_paths["bot2_video_path"]
-        actions_path_bot1 = self.directory / episode_paths["bot1_actions_path"]
-        actions_path_bot2 = self.directory / episode_paths["bot2_actions_path"]
-        try:
-            decord_video_bot1 = VideoReader(str(video_path_bot1), ctx=cpu(0))
-        except Exception as e:
-            raise ValueError(f"Error reading video {video_path_bot1}: {e}") from e
-        try:
-            decord_video_bot2 = VideoReader(str(video_path_bot2), ctx=cpu(0))
-        except Exception as e:
-            raise ValueError(f"Error reading video {video_path_bot2}: {e}") from e
+        n_bots = len(self.bot_names)
+
+        decord_videos = []
+        for vp in episode_paths["video_paths"]:
+            video_path = self.directory / vp
+            try:
+                decord_videos.append(VideoReader(str(video_path), ctx=cpu(0)))
+            except Exception as e:
+                raise ValueError(f"Error reading video {video_path}: {e}") from e
 
         try:
-            with open(actions_path_bot1, "r") as f:
-                bot1_actions = json.load(f)
-            with open(actions_path_bot2, "r") as f:
-                bot2_actions = json.load(f)
-            bot1_actions = bot1_actions[segment_id.bot1_start : segment_id.bot1_stop]
-            bot2_actions = bot2_actions[segment_id.bot2_start : segment_id.bot2_stop]
+            all_actions = []
+            for i, ap in enumerate(episode_paths["actions_paths"]):
+                with open(self.directory / ap, "r") as f:
+                    bot_actions = json.load(f)
+                bot_actions = bot_actions[segment_id.starts[i] : segment_id.stops[i]]
+                all_actions.append(
+                    [{**a, "bot": self.bot_names[i]} for a in bot_actions]
+                )
         except Exception as e:
             raise ValueError(
                 f"Error reading episode actions {segment_id.episode_id}: {e}"
             ) from e
-        bot1_actions = [{**a, "bot": self.bot1_name} for a in bot1_actions]
-        bot2_actions = [{**a, "bot": self.bot2_name} for a in bot2_actions]
 
         try:
-            obs_bot1 = minecraft.read_obs_slice_decord(
-                decord_video_bot1,
-                segment_id.bot1_start,
-                segment_id.bot1_stop,
-                self._obs_resize,
-            )
-            obs_bot2 = minecraft.read_obs_slice_decord(
-                decord_video_bot2,
-                segment_id.bot2_start,
-                segment_id.bot2_stop,
-                self._obs_resize,
-            )
+            all_obs = [
+                minecraft.read_obs_slice_decord(
+                    decord_videos[i],
+                    segment_id.starts[i],
+                    segment_id.stops[i],
+                    self._obs_resize,
+                )
+                for i in range(n_bots)
+            ]
         except Exception as e:
             raise VideoReadError(f"Error reading segment slice: {e}") from e
 
-        bot1_actions_one_hot = minecraft.convert_act_slice_mineflayer(bot1_actions)
-        bot2_actions_one_hot = minecraft.convert_act_slice_mineflayer(bot2_actions)
+        all_act = [minecraft.convert_act_slice_mineflayer(a) for a in all_actions]
         for converter in self._converters:
-            bot1_actions_one_hot = converter.convert(bot1_actions_one_hot)
-            bot2_actions_one_hot = converter.convert(bot2_actions_one_hot)
+            all_act = [converter.convert(a) for a in all_act]
 
         # Randomly shuffle bot order if enabled
-        bot_obs = [obs_bot1, obs_bot2]
-        bot_act = [bot1_actions_one_hot, bot2_actions_one_hot]
         if self._shuffle_bots:
-            indices = [0, 1]
+            indices = list(range(n_bots))
             self._rng.shuffle(indices)
-            bot_obs = [bot_obs[i] for i in indices]
-            bot_act = [bot_act[i] for i in indices]
+            all_obs = [all_obs[i] for i in indices]
+            all_act = [all_act[i] for i in indices]
 
-        obs = np.stack(bot_obs, axis=1)
-        act = np.stack(bot_act, axis=1)
+        obs = np.stack(all_obs, axis=1)
+        act = np.stack(all_act, axis=1)
         segment = Segment(obs, act)
 
         return segment

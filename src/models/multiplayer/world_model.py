@@ -579,10 +579,10 @@ class SolarisMPModel(nnx.Module):
         self.cross_attn_norm = cross_attn_norm
         self.eps = eps
         self.platform = platform
-        # In multiplayer_attn mode we keep an explicit player dimension P=2. Under
-        # concat_* modes we expect video tensors to have P=1 and encode the
+        # In multiplayer_attn mode we keep an explicit player dimension P=num_players.
+        # Under concat_* modes we expect video tensors to have P=1 and encode the
         # original player axis into spatial or channel dimensions instead.
-        self.expected_p_size = 1 if multiplayer_method == "concat_c" else 2
+        self.expected_p_size = 1 if multiplayer_method == "concat_c" else num_players
 
         # For concat_c, input/output channels are multiplied by num_players since
         # players are stacked in channel dimension. For multiplayer_attn,
@@ -1042,11 +1042,11 @@ class SolarisMPModel(nnx.Module):
         latent_height,
         latent_width,
         dtype=jnp.bfloat16,
-        num_players=2,
+        eff_p=2,
     ):
         assert self.local_attn_size != -1
         frames_block_size = (
-            self.local_attn_size * latent_height * latent_width * num_players
+            self.local_attn_size * latent_height * latent_width * eff_p
         )
         head_dim = self.dim // self.num_heads
         actions_head_num = self.blocks.action_model.heads_num
@@ -1069,7 +1069,7 @@ class SolarisMPModel(nnx.Module):
                 kv_cache_mouse=KVCache(
                     jnp.zeros(
                         (
-                            num_players * batch_size * latent_height * latent_width,
+                            eff_p * batch_size * latent_height * latent_width,
                             self.local_attn_size,
                             actions_head_num,
                             mouse_head_dim,
@@ -1078,7 +1078,7 @@ class SolarisMPModel(nnx.Module):
                     ),
                     jnp.zeros(
                         (
-                            batch_size * num_players * latent_height * latent_width,
+                            batch_size * eff_p * latent_height * latent_width,
                             self.local_attn_size,
                             actions_head_num,
                             mouse_head_dim,
@@ -1089,7 +1089,7 @@ class SolarisMPModel(nnx.Module):
                 kv_cache_keyboard=KVCache(
                     jnp.zeros(
                         (
-                            num_players * batch_size,
+                            eff_p * batch_size,
                             self.local_attn_size,
                             actions_head_num,
                             keyboard_head_dim,
@@ -1098,7 +1098,7 @@ class SolarisMPModel(nnx.Module):
                     ),
                     jnp.zeros(
                         (
-                            batch_size * num_players,
+                            batch_size * eff_p,
                             self.local_attn_size,
                             actions_head_num,
                             keyboard_head_dim,

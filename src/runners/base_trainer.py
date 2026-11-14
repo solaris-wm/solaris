@@ -114,6 +114,7 @@ class BaseTrainer(BaseRunner):
         rngs,
         mesh,
         repl_sharding,
+        strict=True,
     ):
         """Create an nnx.Optimizer and an optimizer-state sharding spec."""
 
@@ -137,18 +138,18 @@ class BaseTrainer(BaseRunner):
         model_graph, model_state = nnx.split(optimizer.model)
         if pretrained_model_path:
             model_state = self._load_pretrained_model(
-                pretrained_model_path, model_state
+                pretrained_model_path, model_state, strict=strict
             )
         optimizer.model = nnx.merge(model_graph, model_state)
         optimizer_graph, optimizer_state = nnx.split(optimizer)
         return optimizer_graph, optimizer_state, optimizer_sharding
 
-    def _load_pretrained_model(self, pretrained_model_path, model_state):
-        model_state = self.pretrained_checkpointer.restore(
+    def _load_pretrained_model(self, pretrained_model_path, model_state, strict=True):
+        return self.pretrained_checkpointer.restore(
             pretrained_model_path,
             model_state,
+            strict=strict,
         )
-        return model_state
 
     def save_model_state(self, save_model_state_to):
         optimizer = self._get_model_optimizer()

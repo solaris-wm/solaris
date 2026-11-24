@@ -1,0 +1,10 @@
+# Test-split generations for the FVD metric (fvd/README.md): the 2,048 segments of
+# eval_ids_duet_2048.json, from the duet test split of the training dataset.
+#   python src/inference.py --config-name inference_fvd experiment_name=solaris device.eval_num_samples=2048
+defaults:
+  - shared
+  - device: gpu
+  - model: solaris
+  - runner: inference
+  - dataset@eval_datasets.duet_2048: duet_2048
+  - _self_

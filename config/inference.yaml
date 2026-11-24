@@ -10,5 +10,6 @@ defaults:
   - dataset@eval_datasets.eval_turn_to_look_opposite: eval_turn_to_look_opposite
   - dataset@eval_datasets.eval_both_look_away: eval_both_look_away
   - dataset@eval_datasets.eval_one_looks_away: eval_one_looks_away
+  - dataset@eval_datasets.eval_co_movement: eval_co_movement
 
   - _self_

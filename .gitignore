@@ -19,3 +19,4 @@ pretrained/
 output/
 checkpoint/
 jax_cache/
+fvd/models/

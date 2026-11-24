@@ -65,9 +65,15 @@ These are warnings and you can disregard them.
 
 The code for the VLM evaluation metric lives under [vlm_eval/](vlm_eval/). Refer to [vlm_eval/README.md](vlm_eval/README.md) for how to run it and the implementation details.
 
+To reproduce the paper's VLM numbers, run `python run_all_evals.py --num-trials 3` from `vlm_eval/`; see [Reproducing the paper's numbers](vlm_eval/README.md#reproducing-the-papers-numbers).
+
 ### FID
 
 To get the FID number, check the inference script log file. It outputs FID numbers as log messages by default.
+
+### FVD
+
+The FVD code lives under [fvd/](fvd/). It scores 2,048 test-split generations made with `config/inference_fvd.yaml`; refer to [fvd/README.md](fvd/README.md).
 
 ## Training
 

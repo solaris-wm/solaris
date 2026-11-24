@@ -29,6 +29,7 @@ from handlers.camera_utils import (
     find_end_of_first_rotation_chunk,
     find_last_action_frame,
     get_yaw_difference,
+    _late_episode_target_frame,
 )
 
 
@@ -39,7 +40,7 @@ class MinecraftBothLookAwayHandler(EpisodeTypeHandler):
     Both bots rotate away from each other and then back.
     """
 
-    DATASET_NAMES = ["bothLookAwayEval"]
+    DATASET_NAMES = ["bothLookAwayEval", "bothLookAwayEval_long"]
 
     def get_prompt(self, query_type: str = "player_position_during_turn") -> str:
         # Single frame query: bot has turned away but other player should still be visible
@@ -95,6 +96,13 @@ class MinecraftBothLookAwayHandler(EpisodeTypeHandler):
             turned_back_frame_idx = find_last_action_frame(data, frame1_idx, buffer=20)
             if turned_back_frame_idx is None:
                 raise ValueError(f"No actions found for {variant} in episode {video_pair.episode_num} instance {video_pair.instance_num}")
+
+            # Late-episode toggle: replace only the per-bot "turned back" query
+            # (the "last" query) with the late-horizon frame. The mid-episode
+            # `looked_away` query is left untouched.
+            late_frame_idx = _late_episode_target_frame(frame1_idx, len(data))
+            if late_frame_idx is not None:
+                turned_back_frame_idx = late_frame_idx
 
             # Compute delta_yaw for each query
             delta_yaw_looked_away = get_yaw_difference(data, frame1_idx, looked_away_frame_idx)

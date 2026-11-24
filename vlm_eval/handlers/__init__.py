@@ -11,6 +11,7 @@ from .mc_multiplayer_handler_both_look_away import MinecraftBothLookAwayHandler
 from .mc_multiplayer_handler_structure import MinecraftStructureBuildingHandler
 from .mc_multiplayer_handler_turn_to_look import MinecraftTurnToLookHandler
 from .mc_multiplayer_handler_turn_to_look_opposite import MinecraftTurnToLookOppositeHandler
+from .mc_multiplayer_handler_comovement import MinecraftCoMovementHandler
 
 __all__ = [
     'MinecraftTranslationHandler',
@@ -20,4 +21,5 @@ __all__ = [
     'MinecraftStructureBuildingHandler',
     'MinecraftTurnToLookHandler',
     'MinecraftTurnToLookOppositeHandler',
+    'MinecraftCoMovementHandler',
 ]

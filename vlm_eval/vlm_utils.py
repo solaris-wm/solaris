@@ -18,8 +18,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# Model configuration
-VLM_MODEL_NAME = "gemini-3-flash-preview"
+# Model configuration. The default can be overridden at process-launch time
+# via the VLM_MODEL_NAME env var, which is useful for one-off ablations
+# (e.g. swapping in gemini-3.1-pro-preview) without touching this file.
+VLM_MODEL_NAME = os.environ.get("VLM_MODEL_NAME", "gemini-3-flash-preview")
 
 
 @dataclass
@@ -197,16 +199,23 @@ def find_generated_video_subdir(generated_base_path: Path, dataset_name: str) ->
         "rotationEval": "rotation",
         "bothLookAwayEval": "both_look_away",
         "oneLooksAwayEval": "one_looks_away",
+        "bothLookAwayEval_long": "both_look_away_long",
+        "oneLooksAwayEval_long": "one_looks_away_long",
         "turnToLookEval": "turn_to_look",
         "turnToLookOppositeEval": "turn_to_look_opposite",  # Uses same generated videos as turnToLookEval
         "structureEval": "structure",
+        "coMovementAlwaysRelativeMotionEval": "co_movement",
     }
 
     subdir_key = dataset_to_subdir_key.get(dataset_name)
     if not subdir_key:
         raise ValueError(f"Unknown dataset name: {dataset_name}")
-    strippable_suffixes = [] #
-    replacement_suffixes = []  #
+
+    # Known suffixes that can be safely stripped from generated directory names
+    # These are training/evaluation variants that don't affect which task the videos are for
+    # Order matters: strip _max_speed_long before _max_speed to handle both_look_away_max_speed_long -> both_look_away_long
+    strippable_suffixes = ["_max_speed_long", "_max_speed"] # ["_max_speed", "_ema_length_256"] for legacy models
+    replacement_suffixes = ["_long", ""]  # What to replace each strippable suffix with
     
     # Look for subdirectories matching the pattern (e.g., *_eval_translation, *_eval_rotation).
     # Use exact matching to prevent bugs like "turn_to_look" matching "turn_to_look_opposite".
@@ -246,7 +255,8 @@ def extract_frame_from_generated(
     generated_video_path: Path,
     frame_index_gt: int,
     frame1_idx_gt: int,
-    variant: str
+    variant: str,
+    direct_frame_idx: int | None = None,
 ) -> bytes:
     """
     Extract a frame from a generated side-by-side video.
@@ -256,21 +266,27 @@ def extract_frame_from_generated(
         frame_index_gt: Ground-truth frame index to extract
         frame1_idx_gt: Ground-truth frame1_idx (sneak_frame + SNEAK_FRAME_START_DELAY) - this is frame 0 in generated video
         variant: "alpha" or "bravo" to determine which quadrant to extract
+        direct_frame_idx: If provided, use this frame index directly instead of
+            computing from GT offset. Useful for short generated videos where
+            frame indices are fixed (e.g., frame 0 and frame 32).
 
     Returns:
         Image bytes (PNG format) of the extracted quadrant
     """
     import cv2
 
-    # Calculate the frame index in the generated video
-    # Generated video frame 0 corresponds to GT frame (frame1_idx + 1)
-    generated_frame_idx = frame_index_gt - frame1_idx_gt - 1
+    if direct_frame_idx is not None:
+        generated_frame_idx = direct_frame_idx
+    else:
+        # Calculate the frame index in the generated video
+        # Generated video frame 0 corresponds to GT frame (frame1_idx + 1)
+        generated_frame_idx = frame_index_gt - frame1_idx_gt - 1
 
-    if generated_frame_idx < 0:
-        raise ValueError(
-            f"Frame index {frame_index_gt} is before the generated video start "
-            f"(starts at GT frame {frame1_idx_gt + 1})"
-        )
+        if generated_frame_idx < 0:
+            raise ValueError(
+                f"Frame index {frame_index_gt} is before the generated video start "
+                f"(starts at GT frame {frame1_idx_gt + 1})"
+            )
 
     # Open the generated video
     cap = cv2.VideoCapture(str(generated_video_path))

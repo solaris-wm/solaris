@@ -26,6 +26,24 @@ python run_all_evals.py
 
 This scans `./../output` for model output folders (the output folder of the [inference script](../README.md#simple-inference)) and dataset in `./../datasets/eval`, and calls the underlying [run_eval.py](#run_evalpy) for every model output-dataset pair. Refer to the [run_all_evals.py](#run_all_evalspy) CLI section below for the list of CLI args.
 
+### Reproducing the paper's numbers
+
+```bash
+python run_all_evals.py --num-trials 3
+```
+
+The paper reports the mean episode-level accuracy over 3 trials, judged by `gemini-3-flash-preview` (the default; override with the `VLM_MODEL_NAME` environment variable):
+
+| Paper column | Dataset(s)                                         | Late-horizon query | VLM thinking |
+| ------------ | -------------------------------------------------- | ------------------ | ------------ |
+| Movement     | `translationEval`                                  | no                 | off          |
+| Grounding    | `oneLooksAwayEval`                                 | yes                | off          |
+| Building     | `structureEval`                                    | yes                | on           |
+| Consistency  | mean of `turnToLookEval` and `turnToLookOppositeEval` | yes             | on           |
+| Co-movement  | `coMovementAlwaysRelativeMotionEval`               | no                 | off          |
+
+Late-horizon query: Grounding, Building and Consistency also ask the same question about a frame 20 frames before the end of the generated video, and an episode counts as correct only if both answers are (`run_eval.py --late-episode-strict`). `run_all_evals.py` adds this flag for exactly those evals; pass `--no-late-episode` to turn it off. Thinking is a per-handler setting (`enable_vlm_thinking`).
+
 ### Extract frames (for debugging)
 
 ```bash
@@ -53,7 +71,8 @@ python run_all_evals.py --generations-dir GENERATIONS_DIR --dataset-base DATASET
 | `--limit INT`             | `int`, default `None`                                                                                                                                                | Limit number of episodes/queries per (model, dataset); passed through to `run_eval.py --limit`.                                                                                       |
 | `--num-trials INT`        | `int`, default `1`                                                                                                                                                   | Number of evaluation trials per (model, dataset); forwarded to `run_eval.py --num-trials`. Must be ≥ 1.                                                                               |
 | `-j`, `--max-workers INT` | `int`, default `min(num_models, CPU)`                                                                                                                                | Maximum number of models to evaluate in parallel. Use `1` for strictly sequential execution.                                                                                          |
-| `--eval-types ...`        | space/comma list, default `ENABLED_EVAL_TYPES` (`translation`, `rotation`, `structure`, `turn_to_look`, `turn_to_look_opposite`, `one_looks_away`, `both_look_away`) | Which eval types to run. Accepts space- or comma-separated values and special value `all`. Unknown keys error out.                                                                    |
+| `--eval-types ...`        | space/comma list, default `ENABLED_EVAL_TYPES` (`translation`, `rotation`, `structure`, `turn_to_look`, `turn_to_look_opposite`, `one_looks_away`, `both_look_away`, `co_movement`) | Which eval types to run. Accepts space- or comma-separated values and special value `all`. Unknown keys error out.                                                                    |
+| `--no-late-episode`       | flag (default: `False`)                                                                                                                                              | Do not add the late-horizon query to the Grounding, Building and Consistency evals (see [Reproducing the paper's numbers](#reproducing-the-papers-numbers)).                       |
 | `--models ...`            | space/comma list, default `None` (all models)                                                                                                                        | Filter to specific model folder names under `--generations-dir`. Accepts space- or comma-separated names and special value `all` (no filtering). Unknown names error out.             |
 
 ### `run_eval.py`
@@ -73,7 +92,10 @@ python run_eval.py DATASET_DIR --generated MODEL_OUTPUT_DIR [OPTIONS]
 | `--limit INT`      | `int`, default `None`                             | Limit number of episodes to process. If omitted, a default cap of 32 video pairs is applied when more are available.                                                                                                                |
 | `--num-trials INT` | `int`, default `1`                                | Number of full evaluation trials to run. Produces `trial_*.json` files plus an aggregate `stats.json` in the chosen output directory.                                                                                               |
 | `--api-key STR`    | `str`, default `None`                             | Optional Gemini API key. If provided, sets `GEMINI_API_KEY` for this process; otherwise the `GEMINI_API_KEY` environment variable must already be set for non-`--extract-frames` runs.                                              |
-| `--summary-json`   | `Path`, default auto-detected for structure evals | Path to `structure_building_summary.json` (only used for `structureEval` / `structureNoPlaceEval`). If omitted, a default path under `assets/hard_coded_gt/` is used.                                                               |
+| `--summary-json`   | `Path`, default auto-detected for structure evals | Path to `structure_building_summary.json` (only used for `structureEval`). If omitted, a default path under `assets/hard_coded_gt/` is used.                                                               |
+| `--generated-subdir PATH` | `Path`, default `None`                     | Direct path to a folder of `video_N_side_by_side.mp4` files, bypassing the subfolder lookup of `--generated`. The model name defaults to the parent folder name. |
+| `--model-name STR` | `str`, default `None`                             | Override the model name used in output paths.                                                                                                                                                                                         |
+| `--late-episode-strict` | flag (default: `False`)                      | Also query a frame 20 frames before the end of the generated video for `oneLooksAwayEval`, `structureEval`, `turnToLookEval` and `turnToLookOppositeEval`; an episode is correct only if both queries are. The paper's protocol for those evals. |
 | `--generated PATH` | `Path`, default `None` (ground-truth only)        | Path to a generated-videos directory (e.g. `./../output/solaris/`). Enables evaluation of generated videos; also controls the model name used in output paths and frame extraction directories.                                     |
 
 ### Output Location
@@ -163,6 +185,9 @@ The codebase supports the following eval datasets with every datasets having a d
 | `oneLooksAwayEval`       | One player looks away and back          | 2 (presence queries)          | yes/no                              |
 | `bothLookAwayEval`       | Both players look away and back         | 4 (2 bots × presence queries) | yes/no                              |
 | `structureEval`          | Structure is built and visible          | 1                             | yes                                 |
+| `coMovementAlwaysRelativeMotionEval` | Both players take the same movement action at once | 2 (both perspectives) | closer/farther/left/right |
+
+With `--late-episode-strict`, `oneLooksAwayEval`, `structureEval`, `turnToLookEval` and `turnToLookOppositeEval` get one extra query per existing one, at the late-horizon frame.
 
 ### Code Flow Overview
 
@@ -183,7 +208,7 @@ The execution flows through these steps:
 
 - Matches the dataset name against each handler's `DATASET_NAMES` attribute
 - Returns an instance of the appropriate handler class
-- For structure handlers (`structureEval`, `structureNoPlaceEval`), automatically loads the required ground-truth summary JSON from `assets/hard_coded_gt/`
+- For `structureEval`, automatically loads the required ground-truth summary JSON from `assets/hard_coded_gt/`
 
 #### 3. Video Pair Discovery (`find_mc_video_pairs()`)
 
@@ -267,10 +292,11 @@ Available handlers:
 - `MinecraftLooksAwayHandler`
 - `MinecraftBothLookAwayHandler`
 - `MinecraftStructureBuildingHandler`
+- `MinecraftCoMovementHandler`
 
 ### Structure Evaluation: Special Requirements
 
-The `structureEval` and `structureNoPlaceEval` datasets require hard-coded ground-truth files because the structure type (wall, tower, square) and which bot builds are **randomly selected during data generation**.
+The `structureEval` dataset requires hard-coded ground-truth files because the structure type (wall, tower, square) and which bot builds are **randomly selected during data generation**.
 
 ### How Structure GT Works
 

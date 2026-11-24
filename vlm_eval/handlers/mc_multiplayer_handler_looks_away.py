@@ -29,6 +29,8 @@ from handlers.camera_utils import (
     find_end_of_first_rotation_chunk,
     find_last_action_frame,
     get_yaw_difference,
+    _late_episode_strict_enabled,
+    _late_episode_target_frame,
 )
 
 
@@ -40,7 +42,7 @@ class MinecraftLooksAwayHandler(EpisodeTypeHandler):
     but with longer frame timing.
     """
 
-    DATASET_NAMES = ["oneLooksAwayEval"]
+    DATASET_NAMES = ["oneLooksAwayEval", "oneLooksAwayEval_long"]
 
     def get_prompt(self, query_type: str = "player_position_during_turn") -> str:
         # Single frame query: bot has turned away, other player should NOT be visible
@@ -98,6 +100,17 @@ class MinecraftLooksAwayHandler(EpisodeTypeHandler):
         if turned_back_frame_idx is None:
             raise ValueError(f"No actions found for {variant} in episode {video_pair.episode_num} instance {video_pair.instance_num}")
 
+        # Late-episode toggle: replace only the "turned back" query (the "last"
+        # query) with the late-horizon frame. Leave `looked_away_frame_idx`
+        # unchanged so the mid-episode visibility check is preserved.
+        # In STRICT mode we instead keep `turned_back_frame_idx` at its OLD
+        # location and append an additional late-episode query below, so
+        # episode-level accuracy requires BOTH timestamps to be correct.
+        strict_late = _late_episode_strict_enabled()
+        late_frame_idx = _late_episode_target_frame(frame1_idx, len(rotating_data))
+        if late_frame_idx is not None and not strict_late:
+            turned_back_frame_idx = late_frame_idx
+
 
 
 
@@ -139,5 +152,27 @@ class MinecraftLooksAwayHandler(EpisodeTypeHandler):
                 "instance": video_pair.instance_num
             }
         ))
+
+        # Strict late-episode mode: append an extra query at the late-horizon
+        # frame. Combined with the OLD-pattern `player_position_turned_back`
+        # query above, this requires the model to keep the player visible
+        # both right after the turn-back AND deep into the generated horizon.
+        if strict_late and late_frame_idx is not None and late_frame_idx != turned_back_frame_idx:
+            delta_yaw_late = get_yaw_difference(rotating_data, frame1_idx, late_frame_idx)
+            queries.append(KeyframeQuery(
+                video_path=rotating_video,
+                frame_index=late_frame_idx,
+                expected_answer="yes",
+                metadata={
+                    "variant": variant,
+                    "rotating_bot": variant,
+                    "query_type": "player_position_late_episode",
+                    "rotation_direction": rotation_direction,
+                    "delta_yaw": delta_yaw_late,
+                    "frame1": frame1_idx,
+                    "episode": video_pair.episode_num,
+                    "instance": video_pair.instance_num,
+                }
+            ))
 
         return queries

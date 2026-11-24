@@ -8,6 +8,12 @@ A framework for evaluating video generation models on Minecraft multiplayer scen
 
 ### Environment Setup
 
+If `conda env create` fails with `CondaToSNonInteractiveError` (recent Miniconda/Anaconda installs), accept the Terms of Service for the default channels first:
+
+```bash
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main --channel https://repo.anaconda.com/pkgs/r
+```
+
 ```bash
 cd vlm_eval/
 conda env create -f environment.yml

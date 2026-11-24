@@ -4,7 +4,7 @@
 #   bash fvd/run_fvd.sh output/<experiment_name>/duet_2048
 #
 # The argument is the folder of video_N_side_by_side.mp4 files written by
-#   python src/inference.py ... ~dataset@eval_datasets.<each eval> +dataset@eval_datasets.duet_2048=duet_2048
+#   python src/inference.py --config-name inference_fvd experiment_name=<experiment_name> device.eval_num_samples=2048
 # (see fvd/README.md). Each video holds the ground truth and the generation for both
 # players; the script extracts I3D features for all four quadrants and prints the FVD of
 # the generated clips against the ground-truth clips, both players pooled.

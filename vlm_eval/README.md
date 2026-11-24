@@ -40,7 +40,7 @@ The paper reports the mean episode-level accuracy over 3 trials, judged by `gemi
 | Grounding    | `oneLooksAwayEval`                                 | yes                | off          |
 | Building     | `structureEval`                                    | yes                | on           |
 | Consistency  | mean of `turnToLookEval` and `turnToLookOppositeEval` | yes             | on           |
-| Co-movement  | `coMovementAlwaysRelativeMotionEval`               | no                 | off          |
+| Co-movement  | `coMovementEval`                                   | no                 | off          |
 
 Late-horizon query: Grounding, Building and Consistency also ask the same question about a frame 20 frames before the end of the generated video, and an episode counts as correct only if both answers are (`run_eval.py --late-episode-strict`). `run_all_evals.py` adds this flag for exactly those evals; pass `--no-late-episode` to turn it off. Thinking is a per-handler setting (`enable_vlm_thinking`).
 
@@ -185,7 +185,7 @@ The codebase supports the following eval datasets with every datasets having a d
 | `oneLooksAwayEval`       | One player looks away and back          | 2 (presence queries)          | yes/no                              |
 | `bothLookAwayEval`       | Both players look away and back         | 4 (2 bots × presence queries) | yes/no                              |
 | `structureEval`          | Structure is built and visible          | 1                             | yes                                 |
-| `coMovementAlwaysRelativeMotionEval` | Both players take the same movement action at once | 2 (both perspectives) | closer/farther/left/right |
+| `coMovementEval` | Both players take the same movement action at once | 2 (both perspectives) | closer/farther/left/right |
 
 With `--late-episode-strict`, `oneLooksAwayEval`, `structureEval`, `turnToLookEval` and `turnToLookOppositeEval` get one extra query per existing one, at the late-horizon frame.
 

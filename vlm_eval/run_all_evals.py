@@ -25,7 +25,7 @@ EVAL_TYPE_MAPPING = {
     "turn_to_look_opposite": "turnToLookOppositeEval",
     "one_looks_away": "oneLooksAwayEval",
     "both_look_away": "bothLookAwayEval",
-    "co_movement": "coMovementAlwaysRelativeMotionEval",
+    "co_movement": "coMovementEval",
 }
 
 # Paper protocol: these evals also query a late-horizon frame and count an episode

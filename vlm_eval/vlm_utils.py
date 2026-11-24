@@ -204,7 +204,7 @@ def find_generated_video_subdir(generated_base_path: Path, dataset_name: str) ->
         "turnToLookEval": "turn_to_look",
         "turnToLookOppositeEval": "turn_to_look_opposite",  # Uses same generated videos as turnToLookEval
         "structureEval": "structure",
-        "coMovementAlwaysRelativeMotionEval": "co_movement",
+        "coMovementEval": "co_movement",
     }
 
     subdir_key = dataset_to_subdir_key.get(dataset_name)

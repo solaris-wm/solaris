@@ -1,5 +1,5 @@
 train_dataset_name: ""
-test_dataset_name: "eval/coMovementAlwaysRelativeMotionEval/test"
+test_dataset_name: "eval/coMovementEval/test"
 class: src.data.dataset.DatasetMultiplayer
 name: eval_co_movement
 multiplayer: true

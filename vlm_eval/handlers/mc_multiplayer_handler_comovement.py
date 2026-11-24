@@ -44,7 +44,7 @@ DEADZONE = 0.75
 class MinecraftCoMovementHandler(EpisodeTypeHandler):
     """Both bots move at once; each camera is judged on its own."""
 
-    DATASET_NAMES = ["coMovementAlwaysRelativeMotionEval"]
+    DATASET_NAMES = ["coMovementEval"]
 
     def get_prompt(self, query_type: str = "co_movement") -> str:
         """translationEval's prompt, so the two evals ask the same question.

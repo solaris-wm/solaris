@@ -43,6 +43,12 @@ def build_data_loader(
             f"batch_size ({batch_size}) must be divisible by jax.process_count() "
             f"({jax.process_count()})"
         )
+        # Each mini-batch is split evenly across all devices (GPUs/TPU chips).
+        assert batch_size % jax.device_count() == 0, (
+            f"device.eval_minibatch_size ({batch_size}) must be a multiple of the "
+            f"number of devices ({jax.device_count()}); set it to the number of GPUs "
+            f"or a multiple of it"
+        )
         if (
             eval_pseudo_process_index is not None
             or eval_pseudo_process_count is not None

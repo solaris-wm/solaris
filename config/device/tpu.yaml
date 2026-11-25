@@ -1,7 +1,18 @@
 name: "tpu"
 batch_size: 32
-eval_num_samples: 32
 num_workers: 8
+
+# --- Evaluation ---
+#
+# eval_num_samples   Total eval segments to run (global), capped by eval_ids JSON length.
+#                    runner.params.eval_num_samples defaults to this.
+#
+# eval_minibatch_size  Segments loaded per DataLoader step, summed across all TPU hosts.
+#                      Must be <= eval_num_samples and divisible by jax.process_count().
+#                      Smaller => more `local_num_batches` steps and lower peak memory.
+#                      Default 32, independent of eval_num_samples.
+eval_num_samples: 32
+eval_minibatch_size: 32
 
 data_dir: null
 eval_data_dir: ${device.data_dir}

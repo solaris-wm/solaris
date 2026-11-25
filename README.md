@@ -10,6 +10,12 @@ This repository contains the JAX implementation of the Solaris multiplayer world
 
 ### Set up Python env
 
+If `conda env create` fails with `CondaToSNonInteractiveError` (recent Miniconda/Anaconda installs), accept the Terms of Service for the default channels first:
+
+```bash
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main --channel https://repo.anaconda.com/pkgs/r
+```
+
 ```bash
 conda env create -f environment.yml
 conda activate solaris
@@ -42,7 +48,7 @@ For the simplest scenario, run this:
 CUDA_VISIBLE_DEVICES=0 python src/inference.py experiment_name=solaris device.eval_num_samples=1
 ```
 
-It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will generate `1` video per eval dataset and write generated videos to `./output/`. If you want to run on multiple GPUs, adjust the `CUDA_VISIBLE_DEVICES` env variable, making sure `device.eval_num_samples` is divisible by it. Inference always uses a per-device batch size of `1`, which requires the GPU device to have at least `48GB` memory. Refer to the [sharding](#sharding) section for details.
+It assumes the datasets are in `./datasets` and uses the pretrained model weights at `./pretrained/solaris.pt`. It will generate `1` video per eval dataset and write generated videos to `./output/`. `device.eval_num_samples` is the number of videos generated per eval dataset; they are generated `device.eval_minibatch_size` at a time (default `1`), so memory use does not grow with `eval_num_samples`. With one sample per GPU at a time, each GPU needs at least `48GB` of memory. If you want to run on multiple GPUs, adjust the `CUDA_VISIBLE_DEVICES` env variable and set `device.eval_minibatch_size` to the number of GPUs (each mini-batch is split across them, so it must be a multiple of the GPU count). Refer to the [sharding](#sharding) section for details.
 
 <details>
 <summary>GPU warnings</summary>
@@ -74,6 +80,12 @@ To get the FID number, check the inference script log file. It outputs FID numbe
 Only TPU training is supported and requires a device with at least `95GB` of memory (`v5p`) with a per-device batch size of `1`. Refer to the [sharding](#sharding) section for details.
 
 ### Set up Python env
+
+If `conda env create` fails with `CondaToSNonInteractiveError` (recent Miniconda/Anaconda installs), accept the Terms of Service for the default channels first:
+
+```bash
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main --channel https://repo.anaconda.com/pkgs/r
+```
 
 ```bash
 conda env create -f environment.yml

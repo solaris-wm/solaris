@@ -92,7 +92,11 @@ class Dataset(TorchDataset):
             )
 
         except Exception as e:
-            raise VideoReadError(f"Error reading segment slice: {e}") from e
+            raise VideoReadError(
+                f"Error reading segment slice for episode {segment_id.episode_id}, "
+                f"frames [{segment_id.start}:{segment_id.stop}], "
+                f"video: {video_path}: {e}"
+            ) from e
 
         for converter in self._converters:
             act = converter.convert(act)
@@ -240,7 +244,11 @@ class DatasetMultiplayer(TorchDataset):
                 self._obs_resize,
             )
         except Exception as e:
-            raise VideoReadError(f"Error reading segment slice: {e}") from e
+            raise VideoReadError(
+                f"Error reading segment slice for episode {segment_id.episode_id}, "
+                f"bot1 [{segment_id.bot1_start}:{segment_id.bot1_stop}] video: {video_path_bot1}, "
+                f"bot2 [{segment_id.bot2_start}:{segment_id.bot2_stop}] video: {video_path_bot2}: {e}"
+            ) from e
 
         bot1_actions_one_hot = minecraft.convert_act_slice_mineflayer(bot1_actions)
         bot2_actions_one_hot = minecraft.convert_act_slice_mineflayer(bot2_actions)

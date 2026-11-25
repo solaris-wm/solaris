@@ -75,7 +75,7 @@ def extract_query_frames(
         generated_subdir: Path to generated video subdirectory, or None for GT videos
         current_video_id: Current video ID for generated videos
         frame1_idx: Reference frame index for generated video offset calculation
-        
+
     Returns:
         Dict mapping suffix to frame bytes: {"frame": bytes} for single-frame,
         {"frame1": bytes, "frame2": bytes} for two-frame,
@@ -112,8 +112,15 @@ def extract_query_frames(
             generated_video = generated_subdir / f"video_{current_video_id}_side_by_side.mp4"
             if not generated_video.exists():
                 raise FileNotFoundError(f"Generated video not found: {generated_video.name}")
-            # Use frame1_idx + 1 as first frame since generated video starts there
-            frames["frame1"] = extract_frame_from_generated(generated_video, frame1_idx + 1, frame1_idx, variant)
+            # Generated frame 0 is GT frame1_idx + 1, so that is the default first
+            # frame. Handlers whose "before" frame is later than the episode start
+            # (co-movement queries the second movement chunk, after a shared
+            # approach) set query.frame_index accordingly and it is honoured here.
+            # For every other two-frame handler query.frame_index == frame1_idx.
+            first_gt_frame = (query.frame_index
+                              if query.frame_index > frame1_idx
+                              else frame1_idx + 1)
+            frames["frame1"] = extract_frame_from_generated(generated_video, first_gt_frame, frame1_idx, variant)
             frames["frame2"] = extract_frame_from_generated(generated_video, frame2_idx, frame1_idx, variant)
         else:
             frames["frame1"] = extract_frame(query.video_path, query.frame_index)
@@ -200,6 +207,7 @@ def identify_handler(folder_name: str, summary_json_path: str = None):
         MinecraftStructureBuildingHandler,
         MinecraftTurnToLookHandler,
         MinecraftTurnToLookOppositeHandler,
+        MinecraftCoMovementHandler,
     )
 
     # List of all handler classes (order doesn't matter for exact matching)
@@ -210,6 +218,7 @@ def identify_handler(folder_name: str, summary_json_path: str = None):
         MinecraftBothLookAwayHandler,
         MinecraftTurnToLookHandler,
         MinecraftTurnToLookOppositeHandler,
+        MinecraftCoMovementHandler,
     ]
 
     # Structure handlers require summary_json_path
@@ -226,7 +235,6 @@ def identify_handler(folder_name: str, summary_json_path: str = None):
     for handler_class in structure_handler_classes:
         if folder_name in handler_class.DATASET_NAMES:
             if not summary_json_path:
-                # Use correct default summary JSON based on handler type
                 summary_json_path = str(Path(__file__).parent / "assets" / "hard_coded_gt" / "structure_building_summary.json")
             return handler_class(summary_json_path)
 
@@ -306,7 +314,7 @@ def dry_run(handler, video_pairs: List[VideoPair], limit: Optional[int] = None):
         print(f"  Perspectives: {len(queries)} (both Alpha and Bravo)\n")
 
 
-def run_evaluation(handler, video_pairs: List[VideoPair], output_file: Optional[str] = None, limit: Optional[int] = None, generated_path: Optional[Path] = None, dataset_name: Optional[str] = None, model_name: str = "ground_truth", extract_only: bool = False):
+def run_evaluation(handler, video_pairs: List[VideoPair], output_file: Optional[str] = None, limit: Optional[int] = None, generated_path: Optional[Path] = None, dataset_name: Optional[str] = None, model_name: str = "ground_truth", extract_only: bool = False, generated_subdir_override: Optional[Path] = None):
     """
     Run VLM evaluation with frame extraction.
     
@@ -359,7 +367,13 @@ def run_evaluation(handler, video_pairs: List[VideoPair], output_file: Optional[
 
     # Find generated video subdirectory if using generated videos
     generated_subdir = None
-    if generated_path:
+    if generated_subdir_override:
+        generated_subdir = generated_subdir_override
+        if not generated_subdir.exists():
+            print(f"Error: Generated subdir not found: {generated_subdir}")
+            return []
+        print(f"Using generated video subdirectory (direct): {generated_subdir.name}")
+    elif generated_path:
         generated_subdir = find_generated_video_subdir(generated_path, dataset_name)
         if not generated_subdir:
             print(f"Error: Could not find generated video subdirectory for dataset '{dataset_name}'")
@@ -534,7 +548,10 @@ def run_evaluation(handler, video_pairs: List[VideoPair], output_file: Optional[
             metadata={
                 "prompt": prompt,
                 "handler": handler.__class__.__name__,
-                "using_generated": generated_path is not None,
+                # generated_subdir covers both --generated and
+                # --generated-subdir; generated_path alone missed the latter and
+                # stamped generated runs as ground truth.
+                "using_generated": generated_subdir is not None,
                 **meta
             }
         )
@@ -677,6 +694,81 @@ def _write_stats_json(output_dir: Path, accuracies: list[float]) -> None:
     print(f"Stats saved to: {stats_path}")
 
 
+def _probe_generated_video_frame_count(generated_subdir: Path) -> Optional[int]:
+    """
+    Probe the first available `video_*_side_by_side.mp4` under ``generated_subdir``
+    and return its frame count, or ``None`` if no usable video is found.
+
+    Used by the --late-episode toggle to compute the late-horizon target frame
+    once at startup (different evals are generated at different fixed lengths).
+    """
+    try:
+        import cv2
+    except ImportError:
+        print("⚠ opencv-python not installed; cannot probe generated video frame count.")
+        return None
+
+    candidates = sorted(generated_subdir.glob("video_*_side_by_side.mp4"))
+    if not candidates:
+        return None
+
+    cap = cv2.VideoCapture(str(candidates[0]))
+    try:
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    finally:
+        cap.release()
+
+    return frame_count if frame_count > 0 else None
+
+
+def _maybe_set_late_episode_gen_len(
+    generated_subdir_override: Optional[Path],
+    generated_path: Optional[Path],
+    dataset_name: str,
+) -> None:
+    """
+    If ``LATE_EPISODE_QUERY=1`` (or ``LATE_EPISODE_QUERY_STRICT=1``) and a
+    generated subdir is resolvable, probe one video for its frame count and
+    export it via ``LATE_EPISODE_GEN_LEN`` so the handler helper can compute
+    ``frame1_idx + GEN_LEN - 20`` per episode.
+
+    For the GT-only / dry-run / extract-frames paths (no --generated), we leave
+    the env var unset so the handler falls back to ``len(GT) - 20``.
+    """
+    if (
+        os.environ.get("LATE_EPISODE_QUERY") != "1"
+        and os.environ.get("LATE_EPISODE_QUERY_STRICT") != "1"
+    ):
+        return
+
+    subdir: Optional[Path] = None
+    if generated_subdir_override:
+        subdir = generated_subdir_override
+    elif generated_path:
+        subdir = find_generated_video_subdir(generated_path, dataset_name)
+
+    if subdir is None or not subdir.exists():
+        print(
+            "Late-episode toggle: no generated subdir resolved; "
+            "handler will fall back to len(GT) - 20 per episode."
+        )
+        return
+
+    frame_count = _probe_generated_video_frame_count(subdir)
+    if frame_count is None:
+        print(
+            f"Late-episode toggle: could not probe generated frame count in {subdir}; "
+            "handler will fall back to len(GT) - 20 per episode."
+        )
+        return
+
+    os.environ["LATE_EPISODE_GEN_LEN"] = str(frame_count)
+    print(
+        f"Late-episode toggle: probed generated video length = {frame_count} frames "
+        f"(from {subdir.name}); LATE_EPISODE_GEN_LEN exported."
+    )
+
+
 def _clear_existing_trial_files(output_dir: Path) -> None:
     """Remove any existing trial outputs in output_dir.
 
@@ -707,6 +799,25 @@ def main():
     parser = argparse.ArgumentParser(
         description="Unified evaluation script for mc_multiplayer datasets",
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Dry run (view keyframe info for first 10 episodes)
+  python run_eval.py datasets/eval/turnToLookEval --dry-run --limit 10
+
+  # Extract frames for visual inspection
+  python run_eval.py datasets/eval/turnToLookOppositeEval --extract-frames --limit 5
+
+  # Run full evaluation on ground-truth videos
+  # (auto-saves to results_json/real/turnToLookEval/trial_1.json plus stats.json)
+  python run_eval.py datasets/eval/turnToLookEval
+
+  # Run evaluation on generated videos (the output dir of src/inference.py)
+  # (auto-saves to results_json/generated/{model_name}_turnToLookEval/trial_1.json plus stats.json)
+  python run_eval.py datasets/eval/turnToLookEval --generated output/solaris
+
+  # Paper protocol for Grounding, Building and Consistency: also query a late frame
+  python run_eval.py datasets/eval/turnToLookEval --generated output/solaris --late-episode-strict --num-trials 3
+        """
     )
 
     parser.add_argument(
@@ -770,8 +881,35 @@ def main():
         "--generated",
         help="Path to generated videos directory (e.g., output/solaris/)"
     )
+    parser.add_argument(
+        "--generated-subdir",
+        type=Path,
+        help=(
+            "Direct path to a folder containing video_N_side_by_side.mp4 files. "
+            "Bypasses the automatic subdirectory lookup used by --generated. "
+            "Model name is derived from the parent directory name."
+        ),
+    )
+    parser.add_argument(
+        "--model-name",
+        help="Override the model name (used for output directory naming). Defaults to parent dir of --generated-subdir or name of --generated.",
+    )
+    parser.add_argument(
+        "--late-episode-strict",
+        action="store_true",
+        help=(
+            "Also query a late-horizon frame (20 frames before the end of the generated "
+            "video) for the looks-away, structure and turn-to-look evals; an episode then "
+            "counts as correct only if both queries are. This is the paper's protocol for "
+            "Grounding, Building and Consistency (not for Movement)."
+        ),
+    )
 
     args = parser.parse_args()
+
+    if args.late_episode_strict:
+        # Read by handlers/camera_utils.py when the handlers build their queries.
+        os.environ["LATE_EPISODE_QUERY_STRICT"] = "1"
 
     if args.num_trials < 1:
         print("Error: --num-trials must be >= 1")
@@ -817,22 +955,40 @@ def main():
 
     # Parse generated path if provided
     generated_path = None
+    generated_subdir_override = None
     model_name = "ground_truth"
-    if args.generated:
+    if args.generated_subdir:
+        generated_subdir_override = args.generated_subdir
+        if not generated_subdir_override.exists():
+            print(f"Error: Generated subdir not found: {generated_subdir_override}")
+            return 1
+        model_name = args.model_name or generated_subdir_override.parent.name
+    elif args.generated:
         generated_path = Path(args.generated)
         if not generated_path.exists():
             print(f"Error: Generated videos path not found: {generated_path}")
             return 1
-        model_name = generated_path.name
+        model_name = args.model_name or generated_path.name
+    elif args.model_name:
+        model_name = args.model_name
+
+    # Late-episode toggle: probe generated video frame count once and export it
+    # so the handler helper can compute the per-episode late-horizon frame.
+    _maybe_set_late_episode_gen_len(
+        generated_subdir_override=generated_subdir_override,
+        generated_path=generated_path,
+        dataset_name=dataset_name,
+    )
 
     # Determine output directory for evaluation trials
+    is_generated = generated_path is not None or generated_subdir_override is not None
     output_dir: Optional[Path] = None
     if not args.dry_run and not args.extract_frames:
         output_dir = _resolve_output_dir(
             output_arg=args.output,
             results_dir=args.results_dir,
             dataset_name=dataset_name,
-            generated_path=generated_path,
+            generated_path=generated_path or generated_subdir_override,
             model_name=model_name,
         )
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -853,6 +1009,7 @@ def main():
             dataset_name=dataset_name,
             model_name=model_name,
             extract_only=True,
+            generated_subdir_override=generated_subdir_override,
         )
 
     else:
@@ -876,7 +1033,8 @@ def main():
                 generated_path=generated_path,
                 dataset_name=dataset_name,
                 model_name=model_name,
-            )
+                generated_subdir_override=generated_subdir_override,
+                )
 
             if not trial_output.exists():
                 raise RuntimeError(f"Expected trial output not found: {trial_output}")

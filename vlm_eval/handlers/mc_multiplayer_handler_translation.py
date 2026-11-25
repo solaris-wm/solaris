@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
 from vlm_utils import EpisodeTypeHandler, VideoPair, KeyframeQuery
-from handlers.camera_utils import find_end_of_first_sneak_chunk
+from handlers.camera_utils import find_end_of_first_sneak_chunk, _late_episode_target_frame
 
 
 class MinecraftTranslationHandler(EpisodeTypeHandler):
@@ -90,6 +90,11 @@ class MinecraftTranslationHandler(EpisodeTypeHandler):
         # Calculate keyframe indices
         frame1_idx = sneak_frame
         frame2_idx = movement_frame + 40
+
+        # Late-episode toggle: replace frame2 with the near-end-of-horizon frame.
+        late_frame_idx = _late_episode_target_frame(frame1_idx, len(moving_data))
+        if late_frame_idx is not None:
+            frame2_idx = late_frame_idx
 
         # Determine expected answer based on movement direction
         expected_answer = self._get_expected_answer(movement_direction)
@@ -331,7 +336,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--test-folder",
-        default="/home/dl3957/Documents/mp_eval_datasets/mc_multiplayer_eval_dev/test",
+        default="datasets/eval/translationEval/test",
         help="Path to test folder"
     )
     parser.add_argument(

@@ -12,7 +12,12 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from vlm_utils import EpisodeTypeHandler, VideoPair, KeyframeQuery
-from handlers.camera_utils import find_end_of_first_sneak_chunk, find_last_action_frame
+from handlers.camera_utils import (
+    find_end_of_first_sneak_chunk,
+    find_last_action_frame,
+    _late_episode_strict_enabled,
+    _late_episode_target_frame,
+)
 
 
 class MinecraftStructureBuildingHandler(EpisodeTypeHandler):
@@ -24,6 +29,7 @@ class MinecraftStructureBuildingHandler(EpisodeTypeHandler):
     """
 
     DATASET_NAMES = ["structureEval"]
+    enable_vlm_thinking = True
 
     def __init__(self, summary_json_path: str):
         """
@@ -40,7 +46,7 @@ class MinecraftStructureBuildingHandler(EpisodeTypeHandler):
         with open(self.summary_json_path) as f:
             return json.load(f)
 
-    def get_prompt(self) -> str:
+    def get_prompt(self, query_type: str = "structure") -> str:
         return (
             "Here is a Minecraft screenshot. "
             "Can you tell me whether there is a visible structure built about 6 blocks away from the player? "
@@ -148,6 +154,17 @@ class MinecraftStructureBuildingHandler(EpisodeTypeHandler):
         max_frame2 = frame1_idx + 240
         frame2_idx = min(last_action, max_frame2)
 
+        # Late-episode toggle: replace frame2 with the late-horizon frame,
+        # relaxing the +240 cap. Use the observer's data length for clamping
+        # since the query is rendered from the observer's perspective.
+        # In STRICT mode keep frame2 at its OLD location and append an
+        # additional late-horizon query so episode-level accuracy requires
+        # the structure to be visible at both timestamps.
+        strict_late = _late_episode_strict_enabled()
+        late_frame_idx = _late_episode_target_frame(frame1_idx, len(observer_data))
+        if late_frame_idx is not None and not strict_late:
+            frame2_idx = late_frame_idx
+
         # Check if we have enough frames
         if frame2_idx >= len(observer_data):
             raise ValueError(f"Not enough frames (need {frame2_idx}, have {len(observer_data)}) for episode {video_pair.episode_num} instance {video_pair.instance_num}")
@@ -163,6 +180,7 @@ class MinecraftStructureBuildingHandler(EpisodeTypeHandler):
                 "variant": observer,
                 "builder": builder,
                 "structure": structure,
+                "query_type": "structure",
                 "alpha_structure": episode_data["alpha_structure"],
                 "bravo_structure": episode_data["bravo_structure"],
                 "alpha_builds": episode_data["alpha_builds"],
@@ -172,5 +190,28 @@ class MinecraftStructureBuildingHandler(EpisodeTypeHandler):
                 "instance": video_pair.instance_num
             }
         ))
+
+        # Strict late-episode mode: also emit a late-horizon duplicate so the
+        # episode is only counted correct when the structure is still visible
+        # deep into the generated horizon.
+        if strict_late and late_frame_idx is not None and late_frame_idx != frame2_idx:
+            queries.append(KeyframeQuery(
+                video_path=observer_video,
+                frame_index=late_frame_idx,
+                expected_answer=structure,
+                metadata={
+                    "variant": observer,
+                    "builder": builder,
+                    "structure": structure,
+                    "query_type": "structure_late_episode",
+                    "alpha_structure": episode_data["alpha_structure"],
+                    "bravo_structure": episode_data["bravo_structure"],
+                    "alpha_builds": episode_data["alpha_builds"],
+                    "bravo_builds": episode_data["bravo_builds"],
+                    "frame1": frame1_idx,
+                    "episode": video_pair.episode_num,
+                    "instance": video_pair.instance_num,
+                }
+            ))
 
         return queries

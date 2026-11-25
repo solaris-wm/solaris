@@ -1,0 +1,9 @@
+train_dataset_name: ""
+test_dataset_name: "eval/coMovementEval/test"
+class: src.data.dataset.DatasetMultiplayer
+name: eval_co_movement
+multiplayer: true
+additional_params:
+  bot1_name: "Alpha"
+  bot2_name: "Bravo"
+  shuffle_bots: ${shuffle_bots}

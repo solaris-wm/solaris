@@ -11,11 +11,71 @@ All values are in RADIANS:
 """
 
 import math
+import os
 from typing import List, Optional, Tuple
 
 # The delay (in frames) after the sneak chunk ends when the episode actually starts.
 # This buffer accounts for settling time after the sneak action completes.
 SNEAK_FRAME_START_DELAY = 25
+
+# Margin (in frames) before the very last generated frame for the late-episode
+# query. Pulling back from the literal last frame avoids any boundary artifacts
+# while still keeping the query firmly in the late-horizon regime.
+LATE_EPISODE_END_MARGIN = 20
+
+
+def _late_episode_strict_enabled() -> bool:
+    """Return ``True`` when ``LATE_EPISODE_QUERY_STRICT`` is set to "1".
+
+    Strict mode does NOT replace the original "last" query frame. Instead each
+    handler that opts in emits BOTH the original query AND an additional late-
+    episode query, so episode-level accuracy (which is AND across all queries
+    in the episode) requires the model to be right at both timestamps.
+    """
+    return os.environ.get("LATE_EPISODE_QUERY_STRICT") == "1"
+
+
+def _late_episode_enabled() -> bool:
+    """Return ``True`` if either the regular or strict late-episode toggle is on."""
+    return (
+        os.environ.get("LATE_EPISODE_QUERY") == "1"
+        or _late_episode_strict_enabled()
+    )
+
+
+def _late_episode_target_frame(frame1_idx: int, data_len: int) -> Optional[int]:
+    """
+    Compute the late-episode target frame index for the "late query" toggles.
+
+    Behavior:
+    - Returns ``None`` when neither ``LATE_EPISODE_QUERY`` nor
+      ``LATE_EPISODE_QUERY_STRICT`` is "1" (both toggles off).
+    - When ``LATE_EPISODE_GEN_LEN`` env var is set (probed from the generated
+      video at startup), returns ``frame1_idx + LATE_EPISODE_GEN_LEN - LATE_EPISODE_END_MARGIN``.
+    - Otherwise (GT-only path), falls back to ``data_len - LATE_EPISODE_END_MARGIN``.
+    - The result is always clamped to ``min(target, data_len - 1)`` so it never
+      exceeds the available GT frames.
+
+    Args:
+        frame1_idx: Reference frame index (start of the generated horizon, i.e.
+            the frame just before generated frame 0).
+        data_len: Length of the GT JSON / video for this episode.
+
+    Returns:
+        The target frame index, or ``None`` if no late-episode toggle is on.
+    """
+    if not _late_episode_enabled():
+        return None
+
+    gen_len_str = os.environ.get("LATE_EPISODE_GEN_LEN")
+    if gen_len_str:
+        target = frame1_idx + int(gen_len_str) - LATE_EPISODE_END_MARGIN
+    else:
+        target = data_len - LATE_EPISODE_END_MARGIN
+
+    if target < 0:
+        target = 0
+    return min(target, data_len - 1)
 
 
 def normalize_radians(angle):

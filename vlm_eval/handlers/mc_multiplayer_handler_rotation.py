@@ -12,7 +12,13 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
 from vlm_utils import EpisodeTypeHandler, VideoPair, KeyframeQuery
-from handlers.camera_utils import find_end_of_first_sneak_chunk, find_end_of_first_rotation_chunk, calculate_position_answer, get_yaw_difference
+from handlers.camera_utils import (
+    find_end_of_first_sneak_chunk,
+    find_end_of_first_rotation_chunk,
+    calculate_position_answer,
+    get_yaw_difference,
+    _late_episode_target_frame,
+)
 
 
 class MinecraftRotationHandler(EpisodeTypeHandler):
@@ -70,6 +76,11 @@ class MinecraftRotationHandler(EpisodeTypeHandler):
 
         # Calculate keyframe indices
         frame1_idx = sneak_frame
+
+        # Late-episode toggle: replace the query frame with the late-horizon frame.
+        late_frame_idx = _late_episode_target_frame(frame1_idx, len(rotating_data))
+        if late_frame_idx is not None:
+            frame2_idx = late_frame_idx
 
         # Calculate expected answer based on yaw difference
         try:
@@ -256,7 +267,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--test-folder",
-        default="/home/dl3957/Documents/mp_eval_datasets/mc_multiplayer_eval_dev_2/test",
+        default="datasets/eval/rotationEval/test",
         help="Path to test folder"
     )
     parser.add_argument(

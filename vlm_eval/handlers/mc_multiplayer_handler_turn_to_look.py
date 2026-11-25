@@ -15,7 +15,12 @@ from typing import List, Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from vlm_utils import EpisodeTypeHandler, VideoPair, KeyframeQuery
-from handlers.camera_utils import find_end_of_first_sneak_chunk, find_end_of_first_rotation_chunk
+from handlers.camera_utils import (
+    find_end_of_first_sneak_chunk,
+    find_end_of_first_rotation_chunk,
+    _late_episode_strict_enabled,
+    _late_episode_target_frame,
+)
 
 
 class MinecraftTurnToLookHandler(EpisodeTypeHandler):
@@ -29,7 +34,7 @@ class MinecraftTurnToLookHandler(EpisodeTypeHandler):
     DATASET_NAMES = ["turnToLookEval"]
     enable_vlm_thinking = True
 
-    def get_prompt(self) -> str:
+    def get_prompt(self, query_type: str = "turn_to_look") -> str:
         return (
             "You will be shown two Minecraft screenshots. "
             "Do these two screenshots show the same scenery? Be careful and answer based on the content of the screenshots, not just the camera angles."
@@ -74,6 +79,18 @@ class MinecraftTurnToLookHandler(EpisodeTypeHandler):
         # Use the latest rotation end as frame2 (when both bots have finished turning)
         frame2_idx = max(rotation_ends)
 
+        # Late-episode toggle: replace frame2 with the late-horizon frame.
+        # Use the SHORTER of alpha/bravo lengths so we never exceed either video.
+        # In STRICT mode keep frame2 at its original location and append an
+        # additional late-horizon query below so the episode is only counted
+        # correct when the model agrees at both timestamps.
+        strict_late = _late_episode_strict_enabled()
+        late_frame_idx = _late_episode_target_frame(
+            frame1_idx, min(len(alpha_data), len(bravo_data))
+        )
+        if late_frame_idx is not None and not strict_late:
+            frame2_idx = late_frame_idx
+
         # Validate that frame2_idx exists in both videos
         if frame2_idx >= len(alpha_data) or frame2_idx >= len(bravo_data):
             raise ValueError(f"frame2_idx {frame2_idx} exceeds video length in episode {video_pair.episode_num} instance {video_pair.instance_num}")
@@ -94,6 +111,7 @@ class MinecraftTurnToLookHandler(EpisodeTypeHandler):
             metadata={
                 "variant": "turn_to_look",  # Special marker
                 "is_turn_to_look": True,  # Flag for special handling
+                "query_type": "turn_to_look",
                 "alpha_video": str(video_pair.alpha_video),
                 "bravo_video": str(video_pair.bravo_video),
                 "alpha_frame": frame2_idx,
@@ -103,5 +121,26 @@ class MinecraftTurnToLookHandler(EpisodeTypeHandler):
                 "instance": video_pair.instance_num
             }
         ))
+
+        # Strict late-episode mode: also emit a late-horizon duplicate so the
+        # episode is only counted correct when both timestamps agree.
+        if strict_late and late_frame_idx is not None and late_frame_idx != frame2_idx:
+            queries.append(KeyframeQuery(
+                video_path=video_pair.alpha_video,
+                frame_index=late_frame_idx,
+                expected_answer=expected_answer,
+                metadata={
+                    "variant": "turn_to_look",
+                    "is_turn_to_look": True,
+                    "query_type": "turn_to_look_late_episode",
+                    "alpha_video": str(video_pair.alpha_video),
+                    "bravo_video": str(video_pair.bravo_video),
+                    "alpha_frame": late_frame_idx,
+                    "bravo_frame": late_frame_idx,
+                    "frame1": frame1_idx,
+                    "episode": video_pair.episode_num,
+                    "instance": video_pair.instance_num,
+                }
+            ))
 
         return queries

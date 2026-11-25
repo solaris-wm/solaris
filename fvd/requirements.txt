@@ -1,0 +1,6 @@
+torch
+av
+numpy
+scipy
+tqdm
+huggingface_hub

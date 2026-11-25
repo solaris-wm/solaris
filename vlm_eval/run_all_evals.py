@@ -25,7 +25,15 @@ EVAL_TYPE_MAPPING = {
     "turn_to_look_opposite": "turnToLookOppositeEval",
     "one_looks_away": "oneLooksAwayEval",
     "both_look_away": "bothLookAwayEval",
+    "co_movement": "coMovementEval",
 }
+
+# Paper protocol: these evals also query a late-horizon frame and count an episode
+# as correct only if both queries are (run_eval.py --late-episode-strict). This is
+# how Grounding (one_looks_away), Building (structure) and Consistency (turn_to_look
+# and turn_to_look_opposite) are scored in the paper; Movement (translation) and
+# co-movement are not. Turn it off with --no-late-episode.
+LATE_EPISODE_STRICT_EVAL_TYPES = {"one_looks_away", "structure", "turn_to_look", "turn_to_look_opposite"}
 
 # Which eval types to actually run (comment out to skip)
 ENABLED_EVAL_TYPES = [
@@ -36,7 +44,12 @@ ENABLED_EVAL_TYPES = [
     "turn_to_look_opposite",
     "one_looks_away",
     "both_look_away",
+    "co_movement",
 ]
+
+
+def _protocol_flags(eval_type: str, late_episode: bool) -> list[str]:
+    return ["--late-episode-strict"] if late_episode and eval_type in LATE_EPISODE_STRICT_EVAL_TYPES else []
 
 
 def _normalize_eval_types_arg(values: list[str] | None) -> list[str] | None:
@@ -130,6 +143,7 @@ def _run_one_model(
     limit: int | None,
     num_trials: int,
     results_dir: Path | None,
+    late_episode: bool = True,
 ) -> tuple[str, str, bool]:
     model_name = model_dir.name
     out_lines: list[str] = []
@@ -178,6 +192,7 @@ def _run_one_model(
             cmd.extend(["--limit", str(limit)])
         if num_trials != 1:
             cmd.extend(["--num-trials", str(num_trials)])
+        cmd.extend(_protocol_flags(eval_type, late_episode))
 
         out_lines.append(f"\n{'[DRY RUN] Would run' if dry_run else 'Running'}: {' '.join(cmd)}")
 
@@ -290,6 +305,14 @@ def main():
             "Examples: --models MODEL_A MODEL_B | --models MODEL_A,MODEL_B | --models all."
         ),
     )
+    parser.add_argument(
+        "--no-late-episode",
+        action="store_true",
+        help=(
+            "Do not add the late-horizon query to the Grounding, Building and Consistency "
+            "evals. By default they get it, as in the paper."
+        ),
+    )
     args = parser.parse_args()
     if args.num_trials < 1:
         raise SystemExit("--num-trials must be >= 1")
@@ -379,6 +402,7 @@ def main():
                             cmd.extend(["--results-dir", str(args.results_dir)])
                         if args.limit:
                             cmd.extend(["--limit", str(args.limit)])
+                        cmd.extend(_protocol_flags(eval_type, not args.no_late_episode))
 
                         print(f"\n{'[DRY RUN] Would run' if args.dry_run else 'Running'}: {' '.join(cmd)}")
 
@@ -426,6 +450,7 @@ def main():
                 cmd.extend(["--results-dir", str(args.results_dir)])
             if args.limit:
                 cmd.extend(["--limit", str(args.limit)])
+            cmd.extend(_protocol_flags(eval_type, not args.no_late_episode))
 
             print(f"\n{'[DRY RUN] Would run' if args.dry_run else 'Running'}: {' '.join(cmd)}")
 
@@ -497,6 +522,7 @@ def main():
                 limit=args.limit,
                 num_trials=args.num_trials,
                 results_dir=args.results_dir,
+                late_episode=not args.no_late_episode,
             )
             completed += 1
             print(text)
@@ -513,6 +539,7 @@ def main():
                     args.limit,
                     args.num_trials,
                     args.results_dir,
+                    not args.no_late_episode,
                 ): model_dir
                 for model_dir in sorted_models
             }
